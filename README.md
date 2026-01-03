@@ -210,7 +210,7 @@ Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-Content and data are distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Content and data are distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See `LICENSE-DATA` for more information.
 
 <!-- Contact -->
 ## :handshake: Contact
