@@ -24,7 +24,7 @@
     <img src="https://img.shields.io/github/issues/MateiTiplea/PrimeProvenance-ArP" alt="open issues" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/MateiTiplea/PrimeProvenance-ArP.svg" alt="license" />
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="license" />
   </a>
   
 </p>
