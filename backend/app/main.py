@@ -9,8 +9,8 @@ app = FastAPI(
     version="0.1.0",
 )
 
-app.include_router(artworks_router)
-app.include_router(sparql_router)
+app.include_router(artworks_router, prefix="/api")
+app.include_router(sparql_router, prefix="/api")
 
 
 @app.get("/")

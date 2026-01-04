@@ -1,0 +1,887 @@
+openapi: 3.1.0
+info:
+  title: ArP - Artwork Provenance API
+  description: |
+    REST API for managing artwork provenance data using Semantic Web technologies.
+    
+    This API provides endpoints for:
+    - Managing artworks (CRUD operations)
+    - Tracking provenance chains (ownership history)
+    - Executing SPARQL queries against the RDF knowledge base
+    - Full-text search with faceted filtering
+    - Artwork recommendations
+    - QR code generation for artwork identification
+  version: 1.0.0
+  contact:
+    name: ArP Development Team
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: https://api.arp.example.org/api
+    description: Production server
+
+tags:
+  - name: artworks
+    description: Artwork management operations
+  - name: provenance
+    description: Provenance chain operations
+  - name: sparql
+    description: SPARQL query execution
+  - name: search
+    description: Full-text search operations
+  - name: recommendations
+    description: Artwork recommendations
+  - name: qr
+    description: QR code generation
+
+paths:
+  # ============================================
+  # ARTWORKS CRUD
+  # ============================================
+  /artworks:
+    get:
+      tags: [artworks]
+      summary: List all artworks
+      description: Retrieve a paginated list of artworks with optional filtering and sorting.
+      operationId: listArtworks
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: artist
+          in: query
+          description: Filter by artist name
+          schema:
+            type: string
+        - name: period
+          in: query
+          description: Filter by art historical period
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search term for quick filtering
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [title, dateCreated, -title, -dateCreated]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkListResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [artworks]
+      summary: Create a new artwork
+      description: Create a new artwork entry in the knowledge base.
+      operationId: createArtwork
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtworkCreate'
+      responses:
+        '201':
+          description: Artwork created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artwork'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /artworks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+
+    get:
+      tags: [artworks]
+      summary: Get artwork by ID
+      description: Retrieve a single artwork by its unique identifier.
+      operationId: getArtwork
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artwork'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags: [artworks]
+      summary: Update artwork
+      description: Update an existing artwork's information.
+      operationId: updateArtwork
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtworkUpdate'
+      responses:
+        '200':
+          description: Artwork updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artwork'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [artworks]
+      summary: Delete artwork
+      description: Delete an artwork from the knowledge base.
+      operationId: deleteArtwork
+      responses:
+        '204':
+          description: Artwork deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ============================================
+  # PROVENANCE CHAIN
+  # ============================================
+  /artworks/{id}/provenance:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+
+    get:
+      tags: [provenance]
+      summary: Get provenance chain
+      description: Retrieve the complete provenance (ownership history) chain for an artwork.
+      operationId: getProvenance
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProvenanceRecord'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [provenance]
+      summary: Add provenance event
+      description: Add a new provenance event to an artwork's history.
+      operationId: addProvenanceEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvenanceEventCreate'
+      responses:
+        '201':
+          description: Provenance event added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvenanceRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /artworks/{id}/provenance/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+      - $ref: '#/components/parameters/EventId'
+
+    put:
+      tags: [provenance]
+      summary: Update provenance event
+      description: Update an existing provenance event.
+      operationId: updateProvenanceEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvenanceEventUpdate'
+      responses:
+        '200':
+          description: Provenance event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvenanceRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [provenance]
+      summary: Delete provenance event
+      description: Remove a provenance event from an artwork's history.
+      operationId: deleteProvenanceEvent
+      responses:
+        '204':
+          description: Provenance event deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ============================================
+  # SPARQL QUERY
+  # ============================================
+  /sparql:
+    post:
+      tags: [sparql]
+      summary: Execute SPARQL query
+      description: Execute a SPARQL query against the Fuseki RDF triplestore.
+      operationId: executeSparql
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SPARQLQuery'
+      responses:
+        '200':
+          description: Query executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SPARQLResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sparql/status:
+    get:
+      tags: [sparql]
+      summary: Check Fuseki status
+      description: Check the connection status to the Fuseki SPARQL endpoint.
+      operationId: getSparqlStatus
+      responses:
+        '200':
+          description: Status check successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SPARQLStatus'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ============================================
+  # SEARCH
+  # ============================================
+  /search:
+    get:
+      tags: [search]
+      summary: Search artworks
+      description: Full-text search across artworks with faceted filtering support.
+      operationId: searchArtworks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query string
+          schema:
+            type: string
+            minLength: 1
+        - name: artist
+          in: query
+          description: Filter by artist name
+          schema:
+            type: string
+        - name: period
+          in: query
+          description: Filter by art period
+          schema:
+            type: string
+        - name: medium
+          in: query
+          description: Filter by medium/technique
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filter by current location
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ============================================
+  # RECOMMENDATIONS
+  # ============================================
+  /artworks/{id}/recommendations:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+
+    get:
+      tags: [recommendations]
+      summary: Get artwork recommendations
+      description: Get similar artwork recommendations based on the specified artwork.
+      operationId: getRecommendations
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of recommendations
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 20
+      responses:
+        '200':
+          description: Recommendations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Artwork'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ============================================
+  # QR CODE
+  # ============================================
+  /artworks/{id}/qr:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+
+    get:
+      tags: [qr]
+      summary: Generate QR code
+      description: Generate a QR code for the specified artwork for easy identification and sharing.
+      operationId: getQRCode
+      parameters:
+        - name: size
+          in: query
+          description: QR code size in pixels
+          schema:
+            type: integer
+            default: 200
+            minimum: 50
+            maximum: 1000
+        - name: format
+          in: query
+          description: Output format
+          schema:
+            type: string
+            enum: [png, svg]
+            default: png
+      responses:
+        '200':
+          description: QR code generated successfully
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+# ============================================
+# COMPONENTS
+# ============================================
+components:
+  parameters:
+    ArtworkId:
+      name: id
+      in: path
+      required: true
+      description: Unique artwork identifier (URI or ID)
+      schema:
+        type: string
+        example: "artwork_mona_lisa"
+
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      description: Unique provenance event identifier
+      schema:
+        type: string
+        example: "prov_001"
+
+    PageParam:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+  schemas:
+    # ----------------------------------------
+    # Artwork Schemas
+    # ----------------------------------------
+    Artwork:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+          description: Unique identifier (URI)
+          example: "artwork_mona_lisa"
+        title:
+          type: string
+          description: Title of the artwork
+          example: "Mona Lisa"
+        artist:
+          type: string
+          description: Artist name
+          example: "Leonardo da Vinci"
+        artistUri:
+          type: string
+          description: Artist URI in the knowledge base
+          example: "artist_davinci"
+        dateCreated:
+          type: string
+          description: Date or period of creation
+          example: "1503-1519"
+        medium:
+          type: string
+          description: Medium/technique used
+          example: "Oil on poplar panel"
+        dimensions:
+          type: string
+          description: Physical dimensions
+          example: "77 cm × 53 cm"
+        description:
+          type: string
+          description: Description of the artwork
+        imageUrl:
+          type: string
+          format: uri
+          description: URL to artwork image
+        currentLocation:
+          type: string
+          description: Current location/museum
+          example: "Louvre Museum, Paris"
+        period:
+          type: string
+          description: Art historical period
+          example: "High Renaissance"
+        style:
+          type: string
+          description: Artistic style
+          example: "Renaissance"
+        provenance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProvenanceRecord'
+          description: Provenance history (when embedded)
+        externalLinks:
+          $ref: '#/components/schemas/ExternalLinks'
+
+    ArtworkCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        artist:
+          type: string
+        dateCreated:
+          type: string
+        medium:
+          type: string
+        dimensions:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        period:
+          type: string
+        style:
+          type: string
+
+    ArtworkUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        artist:
+          type: string
+        dateCreated:
+          type: string
+        medium:
+          type: string
+        dimensions:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        period:
+          type: string
+        style:
+          type: string
+
+    ArtworkListResponse:
+      type: object
+      required: [items, total, page, limit, hasMore]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artwork'
+        total:
+          type: integer
+          description: Total number of artworks matching the query
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        hasMore:
+          type: boolean
+          description: Whether there are more pages
+
+    ExternalLinks:
+      type: object
+      properties:
+        dbpedia:
+          type: string
+          format: uri
+          description: DBpedia resource URI
+        wikidata:
+          type: string
+          format: uri
+          description: Wikidata entity URI
+        getty:
+          type: string
+          format: uri
+          description: Getty AAT URI
+
+    # ----------------------------------------
+    # Provenance Schemas
+    # ----------------------------------------
+    ProvenanceRecord:
+      type: object
+      required: [id, event, date]
+      properties:
+        id:
+          type: string
+          description: Unique event identifier
+          example: "prov_001"
+        date:
+          type: string
+          description: Date of the event
+          example: "1519-01-01"
+        event:
+          type: string
+          description: Type of provenance event
+          enum:
+            - Creation
+            - Sale
+            - Gift
+            - Bequest
+            - Theft
+            - Recovery
+            - Loan
+            - Return
+            - Acquisition
+          example: "Acquisition"
+        owner:
+          type: string
+          description: Owner name at this point
+          example: "King Francis I of France"
+        location:
+          type: string
+          description: Location during this event
+          example: "Château d'Amboise"
+        description:
+          type: string
+          description: Additional event details
+        sourceUri:
+          type: string
+          format: uri
+          description: Source document or reference URI
+        order:
+          type: integer
+          description: Order in the provenance chain
+
+    ProvenanceEventCreate:
+      type: object
+      required: [event, date]
+      properties:
+        event:
+          type: string
+          enum: [Creation, Sale, Gift, Bequest, Theft, Recovery, Loan, Return, Acquisition]
+        date:
+          type: string
+        owner:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        sourceUri:
+          type: string
+          format: uri
+
+    ProvenanceEventUpdate:
+      type: object
+      properties:
+        event:
+          type: string
+          enum: [Creation, Sale, Gift, Bequest, Theft, Recovery, Loan, Return, Acquisition]
+        date:
+          type: string
+        owner:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        sourceUri:
+          type: string
+          format: uri
+
+    # ----------------------------------------
+    # SPARQL Schemas
+    # ----------------------------------------
+    SPARQLQuery:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          description: SPARQL query string
+          example: "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10"
+
+    SPARQLResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the query executed successfully
+        results:
+          type: object
+          properties:
+            head:
+              type: object
+              properties:
+                vars:
+                  type: array
+                  items:
+                    type: string
+            bindings:
+              type: array
+              items:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    value:
+                      type: string
+        error:
+          type: string
+          description: Error message if query failed
+
+    SPARQLStatus:
+      type: object
+      required: [connected]
+      properties:
+        connected:
+          type: boolean
+          description: Whether Fuseki is reachable
+
+    # ----------------------------------------
+    # Search Schemas
+    # ----------------------------------------
+    SearchResponse:
+      type: object
+      required: [results, total]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artwork'
+        total:
+          type: integer
+          description: Total number of matching results
+        page:
+          type: integer
+        limit:
+          type: integer
+        facets:
+          $ref: '#/components/schemas/SearchFacets'
+
+    SearchFacets:
+      type: object
+      properties:
+        artists:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetItem'
+        periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetItem'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/FacetItem'
+
+    FacetItem:
+      type: object
+      required: [name, count]
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+
+    # ----------------------------------------
+    # Error Schemas
+    # ----------------------------------------
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Error code
+              example: "NOT_FOUND"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Artwork not found"
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "BAD_REQUEST"
+              message: "Invalid request parameters"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "The requested resource was not found"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Request validation failed"
+              details:
+                field: "title"
+                issue: "Title is required"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: "INTERNAL_ERROR"
+              message: "An unexpected error occurred"
