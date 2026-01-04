@@ -1,0 +1,440 @@
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix schema:  <http://schema.org/> .
+@prefix aat:     <http://vocab.getty.edu/aat/> .
+@prefix dbr:     <http://dbpedia.org/resource/> .
+@prefix wd:      <http://www.wikidata.org/entity/> .
+@prefix arp:     <http://example.org/arp#> .
+
+# =============================================================================
+# SAMPLE DATA - ArP Artwork Provenance
+# =============================================================================
+# This file contains sample artwork data demonstrating the ArP ontology
+# with provenance chains, artist information, and links to external data sources.
+# =============================================================================
+
+# =============================================================================
+# LOCATIONS
+# =============================================================================
+
+arp:location_louvre a arp:Location, schema:Museum ;
+    schema:name "Musée du Louvre"@en ;
+    schema:address "Rue de Rivoli, 75001 Paris, France" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "48.8606"^^xsd:decimal ;
+        schema:longitude "2.3376"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Louvre, wd:Q19675 .
+
+arp:location_moma a arp:Location, schema:Museum ;
+    schema:name "Museum of Modern Art (MoMA)"@en ;
+    schema:address "11 West 53rd Street, New York, NY 10019, USA" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "40.7614"^^xsd:decimal ;
+        schema:longitude "-73.9776"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Museum_of_Modern_Art, wd:Q188740 .
+
+arp:location_vangogh_museum a arp:Location, schema:Museum ;
+    schema:name "Van Gogh Museum"@en ;
+    schema:address "Museumplein 6, 1071 DJ Amsterdam, Netherlands" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "52.3584"^^xsd:decimal ;
+        schema:longitude "4.8811"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Van_Gogh_Museum, wd:Q224124 .
+
+arp:location_uffizi a arp:Location, schema:Museum ;
+    schema:name "Uffizi Gallery"@en ;
+    schema:address "Piazzale degli Uffizi, 6, 50122 Florence, Italy" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "43.7687"^^xsd:decimal ;
+        schema:longitude "11.2558"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Uffizi, wd:Q51252 .
+
+arp:location_mnac a arp:Location, schema:Museum ;
+    schema:name "National Museum of Art of Romania"@en ;
+    schema:address "Calea Victoriei 49-53, Bucharest, Romania" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "44.4392"^^xsd:decimal ;
+        schema:longitude "26.0967"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:National_Museum_of_Art_of_Romania, wd:Q749711 .
+
+arp:location_florence a arp:Location ;
+    schema:name "Florence"@en ;
+    schema:address "Florence, Tuscany, Italy" ;
+    owl:sameAs dbr:Florence, wd:Q2044 .
+
+arp:location_amboise a arp:Location ;
+    schema:name "Château d'Amboise"@en ;
+    schema:address "Amboise, France" ;
+    owl:sameAs dbr:Château_d%27Amboise .
+
+arp:location_fontainebleau a arp:Location ;
+    schema:name "Palace of Fontainebleau"@en ;
+    schema:address "Fontainebleau, France" ;
+    owl:sameAs dbr:Palace_of_Fontainebleau, wd:Q182811 .
+
+# =============================================================================
+# ARTISTS
+# =============================================================================
+
+arp:artist_davinci a arp:Artist ;
+    schema:name "Leonardo da Vinci"@en ;
+    schema:birthDate "1452-04-15"^^xsd:date ;
+    schema:deathDate "1519-05-02"^^xsd:date ;
+    schema:birthPlace arp:location_florence ;
+    schema:nationality "Italian" ;
+    dc:description "Italian polymath of the High Renaissance, painter, sculptor, architect, and engineer."@en ;
+    owl:sameAs dbr:Leonardo_da_Vinci, wd:Q762 .
+
+arp:artist_vangogh a arp:Artist ;
+    schema:name "Vincent van Gogh"@en ;
+    schema:birthDate "1853-03-30"^^xsd:date ;
+    schema:deathDate "1890-07-29"^^xsd:date ;
+    schema:nationality "Dutch" ;
+    dc:description "Dutch Post-Impressionist painter who posthumously became one of the most famous artists in Western art history."@en ;
+    owl:sameAs dbr:Vincent_van_Gogh, wd:Q5582 .
+
+arp:artist_botticelli a arp:Artist ;
+    schema:name "Sandro Botticelli"@en ;
+    schema:birthDate "1445-03-01"^^xsd:date ;
+    schema:deathDate "1510-05-17"^^xsd:date ;
+    schema:birthPlace arp:location_florence ;
+    schema:nationality "Italian" ;
+    dc:description "Italian painter of the Early Renaissance and member of the Florentine School."@en ;
+    owl:sameAs dbr:Sandro_Botticelli, wd:Q5669 .
+
+arp:artist_grigorescu a arp:Artist ;
+    schema:name "Nicolae Grigorescu"@en ;
+    schema:birthDate "1838-05-15"^^xsd:date ;
+    schema:deathDate "1907-07-21"^^xsd:date ;
+    schema:nationality "Romanian" ;
+    dc:description "Romanian painter, founder of modern Romanian painting and one of the most significant Romanian painters."@en ;
+    owl:sameAs dbr:Nicolae_Grigorescu, wd:Q434333 .
+
+arp:artist_luchian a arp:Artist ;
+    schema:name "Ștefan Luchian"@en ;
+    schema:birthDate "1868-02-01"^^xsd:date ;
+    schema:deathDate "1916-06-28"^^xsd:date ;
+    schema:nationality "Romanian" ;
+    dc:description "Romanian painter, considered one of the leading figures in Romanian modern art."@en ;
+    owl:sameAs <http://dbpedia.org/resource/Ștefan_Luchian>, wd:Q558616 .
+
+# =============================================================================
+# OWNERS
+# =============================================================================
+
+arp:owner_french_crown a arp:OrganizationOwner ;
+    schema:name "French Royal Collection"@en ;
+    dc:description "The collection of artworks owned by the French monarchy."@en .
+
+arp:owner_napoleon a arp:PersonOwner ;
+    schema:name "Napoleon Bonaparte"@en ;
+    dc:description "French military leader and Emperor of France."@en ;
+    owl:sameAs dbr:Napoleon, wd:Q517 .
+
+arp:owner_french_republic a arp:OrganizationOwner ;
+    schema:name "French Republic"@en ;
+    dc:description "The French state as owner of national cultural heritage."@en .
+
+arp:owner_theo_vangogh a arp:PersonOwner ;
+    schema:name "Theo van Gogh"@en ;
+    dc:description "Dutch art dealer and younger brother of Vincent van Gogh."@en ;
+    owl:sameAs <http://dbpedia.org/resource/Theo_van_Gogh_(art_dealer)>, wd:Q317188 .
+
+arp:owner_johanna_vangogh a arp:PersonOwner ;
+    schema:name "Johanna van Gogh-Bonger"@en ;
+    dc:description "Wife of Theo van Gogh, preserved and promoted Vincent's legacy."@en ;
+    owl:sameAs dbr:Johanna_van_Gogh-Bonger, wd:Q235226 .
+
+arp:owner_vangogh_foundation a arp:OrganizationOwner ;
+    schema:name "Vincent van Gogh Foundation"@en ;
+    dc:description "Foundation established to preserve and exhibit Van Gogh's works."@en .
+
+arp:owner_medici a arp:OrganizationOwner ;
+    schema:name "House of Medici"@en ;
+    dc:description "Italian banking family and political dynasty in Florence."@en ;
+    owl:sameAs dbr:House_of_Medici, wd:Q170022 .
+
+arp:owner_italian_state a arp:OrganizationOwner ;
+    schema:name "Italian State"@en ;
+    dc:description "The Italian Republic as custodian of national cultural heritage."@en .
+
+arp:owner_romanian_state a arp:OrganizationOwner ;
+    schema:name "Romanian State"@en ;
+    dc:description "The Romanian state as custodian of national cultural heritage."@en .
+
+arp:owner_carol_i a arp:PersonOwner ;
+    schema:name "King Carol I of Romania"@en ;
+    dc:description "First King of Romania, founder of the Royal Collection."@en ;
+    owl:sameAs dbr:Carol_I_of_Romania, wd:Q153475 .
+
+arp:owner_private_collectors a arp:Owner ;
+    schema:name "Private Collectors"@en ;
+    dc:description "Various private art collectors who held the artwork before museum acquisition."@en .
+
+arp:owner_romanian_private_collectors a arp:Owner ;
+    schema:name "Romanian Private Collectors"@en ;
+    dc:description "Various private Romanian art collectors."@en .
+
+arp:owner_moma a arp:OrganizationOwner ;
+    schema:name "Museum of Modern Art"@en ;
+    dc:description "American art museum in Midtown Manhattan, New York City."@en ;
+    arp:ownerLocation arp:location_moma ;
+    owl:sameAs dbr:Museum_of_Modern_Art, wd:Q188740 .
+
+# =============================================================================
+# ARTWORK 1: Mona Lisa
+# =============================================================================
+
+arp:artwork_mona_lisa a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Mona Lisa"@en ;
+    dc:title "La Gioconda"@it ;
+    dc:creator arp:artist_davinci ;
+    dcterms:created "1503"^^xsd:gYear ;
+    arp:creationEndDate "1519"^^xsd:gYear ;
+    dc:description "Half-length portrait painting by Leonardo da Vinci, considered an archetypal masterpiece of the Italian Renaissance."@en ;
+    arp:artworkMedium "Oil on poplar panel" ;
+    arp:artworkDimensions "77 cm × 53 cm (30 in × 21 in)" ;
+    arp:artworkPeriod "High Renaissance" ;
+    arp:artworkStyle "Renaissance" ;
+    schema:image <https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg> ;
+    schema:artMedium aat:300015050 ;  # Oil paint
+    arp:currentOwner arp:owner_french_republic ;
+    arp:currentLocation arp:location_louvre ;
+    owl:sameAs dbr:Mona_Lisa, wd:Q12418 ;
+    arp:hasProvenanceEvent arp:prov_mona_lisa_001, arp:prov_mona_lisa_002, arp:prov_mona_lisa_003, arp:prov_mona_lisa_004 .
+
+# Provenance Events for Mona Lisa
+arp:prov_mona_lisa_001 a arp:ProvenanceEvent ;
+    arp:eventType "Commission/Creation" ;
+    dc:description "Leonardo da Vinci painted the Mona Lisa, possibly commissioned by Francesco del Giocondo."@en ;
+    prov:startedAtTime "1503-01-01"^^xsd:date ;
+    prov:endedAtTime "1519-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_davinci ;
+    arp:eventLocation arp:location_florence ;
+    arp:provenanceOrder 1 .
+
+arp:prov_mona_lisa_002 a arp:ProvenanceEvent ;
+    arp:eventType "Acquisition" ;
+    dc:description "King Francis I of France acquired the painting from Leonardo or his estate."@en ;
+    prov:startedAtTime "1519-01-01"^^xsd:date ;
+    arp:fromOwner arp:artist_davinci ;
+    arp:toOwner arp:owner_french_crown ;
+    arp:eventLocation arp:location_amboise ;
+    arp:provenanceOrder 2 .
+
+arp:prov_mona_lisa_003 a arp:ProvenanceEvent ;
+    arp:eventType "Transfer" ;
+    dc:description "The painting was moved to the Palace of Fontainebleau and later to Versailles."@en ;
+    prov:startedAtTime "1519-01-01"^^xsd:date ;
+    prov:endedAtTime "1797-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_french_crown ;
+    arp:toOwner arp:owner_french_crown ;
+    arp:eventLocation arp:location_fontainebleau ;
+    arp:provenanceOrder 3 .
+
+arp:prov_mona_lisa_004 a arp:ProvenanceEvent ;
+    arp:eventType "Nationalization" ;
+    dc:description "After the French Revolution, the painting became property of the French Republic and was moved to the Louvre."@en ;
+    prov:startedAtTime "1797-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_french_crown ;
+    arp:toOwner arp:owner_french_republic ;
+    arp:eventLocation arp:location_louvre ;
+    arp:provenanceOrder 4 .
+
+# =============================================================================
+# ARTWORK 2: The Starry Night
+# =============================================================================
+
+arp:artwork_starry_night a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "The Starry Night"@en ;
+    dc:title "De sterrennacht"@nl ;
+    dc:creator arp:artist_vangogh ;
+    dcterms:created "1889-06"^^xsd:gYearMonth ;
+    dc:description "An oil-on-canvas painting depicting a swirling night sky over a village, painted during Van Gogh's stay at the Saint-Paul-de-Mausole asylum."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "73.7 cm × 92.1 cm (29 in × 36¼ in)" ;
+    arp:artworkPeriod "Post-Impressionism" ;
+    arp:artworkStyle "Post-Impressionism" ;
+    schema:image <https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg> ;
+    schema:artMedium aat:300015050 ;  # Oil paint
+    arp:currentOwner arp:owner_moma ;
+    arp:currentLocation arp:location_moma ;
+    owl:sameAs dbr:The_Starry_Night, wd:Q45585 ;
+    arp:hasProvenanceEvent arp:prov_starry_night_001, arp:prov_starry_night_002, arp:prov_starry_night_003, arp:prov_starry_night_004 .
+
+# Provenance Events for The Starry Night
+arp:prov_starry_night_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Vincent van Gogh painted The Starry Night while staying at the Saint-Paul-de-Mausole asylum in Saint-Rémy-de-Provence."@en ;
+    prov:startedAtTime "1889-06-01"^^xsd:date ;
+    arp:toOwner arp:artist_vangogh ;
+    arp:provenanceOrder 1 .
+
+arp:prov_starry_night_002 a arp:ProvenanceEvent ;
+    arp:eventType "Inheritance" ;
+    dc:description "After Vincent's death, the painting passed to his brother Theo, and then to Theo's widow Johanna."@en ;
+    prov:startedAtTime "1890-07-29"^^xsd:date ;
+    arp:fromOwner arp:artist_vangogh ;
+    arp:toOwner arp:owner_johanna_vangogh ;
+    arp:provenanceOrder 2 .
+
+arp:prov_starry_night_003 a arp:ProvenanceEvent ;
+    arp:eventType "Sale" ;
+    dc:description "Johanna van Gogh-Bonger sold the painting through dealers."@en ;
+    prov:startedAtTime "1900-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_johanna_vangogh ;
+    arp:toOwner arp:owner_private_collectors ;
+    arp:acquisitionMethod "Sale through art dealers" ;
+    arp:provenanceOrder 3 .
+
+arp:prov_starry_night_004 a arp:ProvenanceEvent ;
+    arp:eventType "Acquisition" ;
+    dc:description "MoMA acquired the painting through the Lillie P. Bliss Bequest."@en ;
+    prov:startedAtTime "1941-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_private_collectors ;
+    arp:toOwner arp:owner_moma ;
+    arp:eventLocation arp:location_moma ;
+    arp:acquisitionMethod "Bequest" ;
+    arp:provenanceOrder 4 .
+
+# =============================================================================
+# ARTWORK 3: The Birth of Venus
+# =============================================================================
+
+arp:artwork_birth_of_venus a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "The Birth of Venus"@en ;
+    dc:title "Nascita di Venere"@it ;
+    dc:creator arp:artist_botticelli ;
+    dcterms:created "1485"^^xsd:gYear ;
+    dc:description "A painting depicting the goddess Venus arriving at the shore after her birth, when she emerged from the sea fully-grown."@en ;
+    arp:artworkMedium "Tempera on canvas" ;
+    arp:artworkDimensions "172.5 cm × 278.9 cm (67.9 in × 109.6 in)" ;
+    arp:artworkPeriod "Early Renaissance" ;
+    arp:artworkStyle "Renaissance" ;
+    schema:image <https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/1280px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg> ;
+    schema:artMedium aat:300015062 ;  # Tempera
+    arp:currentOwner arp:owner_italian_state ;
+    arp:currentLocation arp:location_uffizi ;
+    owl:sameAs dbr:The_Birth_of_Venus, wd:Q81689 ;
+    arp:hasProvenanceEvent arp:prov_venus_001, arp:prov_venus_002, arp:prov_venus_003 .
+
+# Provenance Events for The Birth of Venus
+arp:prov_venus_001 a arp:ProvenanceEvent ;
+    arp:eventType "Commission" ;
+    dc:description "Commissioned by Lorenzo di Pierfrancesco de' Medici for his Villa di Castello."@en ;
+    prov:startedAtTime "1484-01-01"^^xsd:date ;
+    prov:endedAtTime "1486-01-01"^^xsd:date ;
+    arp:toOwner arp:owner_medici ;
+    arp:eventLocation arp:location_florence ;
+    arp:provenanceOrder 1 .
+
+arp:prov_venus_002 a arp:ProvenanceEvent ;
+    arp:eventType "Collection Transfer" ;
+    dc:description "Transferred to the Uffizi Gallery when the Medici collection became state property."@en ;
+    prov:startedAtTime "1815-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_medici ;
+    arp:toOwner arp:owner_italian_state ;
+    arp:eventLocation arp:location_uffizi ;
+    arp:provenanceOrder 2 .
+
+arp:prov_venus_003 a arp:ProvenanceEvent ;
+    arp:eventType "Current Display" ;
+    dc:description "Currently on permanent display at the Uffizi Gallery in Florence."@en ;
+    prov:startedAtTime "1815-01-01"^^xsd:date ;
+    arp:toOwner arp:owner_italian_state ;
+    arp:eventLocation arp:location_uffizi ;
+    arp:provenanceOrder 3 .
+
+# =============================================================================
+# ARTWORK 4: Car cu boi (Ox Cart) - Romanian Heritage
+# =============================================================================
+
+arp:artwork_car_cu_boi a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Car cu boi"@ro ;
+    dc:title "Ox Cart"@en ;
+    dc:creator arp:artist_grigorescu ;
+    dcterms:created "1885"^^xsd:gYear ;
+    dc:description "A masterpiece of Romanian painting depicting a traditional ox cart in the Romanian countryside, exemplifying Grigorescu's plein air technique."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "58 cm × 93 cm" ;
+    arp:artworkPeriod "Romanian Impressionism" ;
+    arp:artworkStyle "Impressionism, Realism" ;
+    arp:currentOwner arp:owner_romanian_state ;
+    arp:currentLocation arp:location_mnac ;
+    owl:sameAs wd:Q12726936 ;
+    arp:hasProvenanceEvent arp:prov_car_001, arp:prov_car_002 .
+
+# Provenance Events for Car cu boi
+arp:prov_car_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Nicolae Grigorescu painted this work as part of his series depicting Romanian rural life."@en ;
+    prov:startedAtTime "1885-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_grigorescu ;
+    arp:provenanceOrder 1 .
+
+arp:prov_car_002 a arp:ProvenanceEvent ;
+    arp:eventType "Acquisition" ;
+    dc:description "Acquired for the National Museum of Art of Romania collection."@en ;
+    prov:startedAtTime "1950-01-01"^^xsd:date ;
+    arp:fromOwner arp:artist_grigorescu ;
+    arp:toOwner arp:owner_romanian_state ;
+    arp:eventLocation arp:location_mnac ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 5: Anemone - Romanian Heritage
+# =============================================================================
+
+arp:artwork_anemone a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Anemone"@en ;
+    dc:creator arp:artist_luchian ;
+    dcterms:created "1908"^^xsd:gYear ;
+    dc:description "One of Ștefan Luchian's famous flower paintings, showcasing his distinctive style despite being affected by multiple sclerosis."@en ;
+    arp:artworkMedium "Oil on cardboard" ;
+    arp:artworkDimensions "44 cm × 34 cm" ;
+    arp:artworkPeriod "Romanian Post-Impressionism" ;
+    arp:artworkStyle "Post-Impressionism" ;
+    arp:currentOwner arp:owner_romanian_state ;
+    arp:currentLocation arp:location_mnac ;
+    arp:hasProvenanceEvent arp:prov_anemone_001, arp:prov_anemone_002, arp:prov_anemone_003 .
+
+# Provenance Events for Anemone
+arp:prov_anemone_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Ștefan Luchian painted this work despite his progressive illness, using brushes tied to his hands."@en ;
+    prov:startedAtTime "1908-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_luchian ;
+    arp:provenanceOrder 1 .
+
+arp:prov_anemone_002 a arp:ProvenanceEvent ;
+    arp:eventType "Private Collection" ;
+    dc:description "The painting was held in various private Romanian collections after the artist's death."@en ;
+    prov:startedAtTime "1916-06-28"^^xsd:date ;
+    arp:fromOwner arp:artist_luchian ;
+    arp:toOwner arp:owner_romanian_private_collectors ;
+    arp:provenanceOrder 2 .
+
+arp:prov_anemone_003 a arp:ProvenanceEvent ;
+    arp:eventType "National Acquisition" ;
+    dc:description "Acquired for the national collection at the National Museum of Art of Romania."@en ;
+    prov:startedAtTime "1950-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_romanian_private_collectors ;
+    arp:toOwner arp:owner_romanian_state ;
+    arp:eventLocation arp:location_mnac ;
+    arp:provenanceOrder 3 .
+

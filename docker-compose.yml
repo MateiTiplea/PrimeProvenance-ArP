@@ -18,7 +18,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   fuseki:
-    image: stain/jena-fuseki:latest
+    build: ./fuseki
     container_name: arp-fuseki
     ports:
       - "3030:3030"
@@ -26,6 +26,7 @@ services:
       - ADMIN_PASSWORD=admin
     volumes:
       - fuseki-data:/fuseki
+      - ./fuseki/data:/staging:ro
 
 volumes:
   fuseki-data:

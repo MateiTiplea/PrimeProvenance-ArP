@@ -1,0 +1,288 @@
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix schema:  <http://schema.org/> .
+@prefix crm:     <http://www.cidoc-crm.org/cidoc-crm/> .
+@prefix aat:     <http://vocab.getty.edu/aat/> .
+@prefix arp:     <http://example.org/arp#> .
+
+# =============================================================================
+# ArP Ontology - Artwork Provenance
+# =============================================================================
+# This ontology defines classes and properties for modeling artwork provenance
+# using established vocabularies: CIDOC-CRM, Dublin Core, PROV-O, and Schema.org
+# =============================================================================
+
+arp: a owl:Ontology ;
+    dc:title "ArP - Artwork Provenance Ontology"@en ;
+    dc:description "An ontology for modeling and managing the provenance of artistic works."@en ;
+    dc:creator "PrimeProvenance Team" ;
+    dcterms:created "2026-01-04"^^xsd:date ;
+    owl:versionInfo "1.0.0" .
+
+# =============================================================================
+# CLASSES
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Artwork Class
+# -----------------------------------------------------------------------------
+arp:Artwork a owl:Class ;
+    rdfs:label "Artwork"@en ;
+    rdfs:comment "A visual artwork such as a painting, sculpture, or drawing."@en ;
+    rdfs:subClassOf crm:E22_Human-Made_Object, schema:VisualArtwork ;
+    owl:equivalentClass [
+        a owl:Class ;
+        owl:intersectionOf (crm:E22_Human-Made_Object schema:VisualArtwork)
+    ] .
+
+# -----------------------------------------------------------------------------
+# Artist Class
+# -----------------------------------------------------------------------------
+arp:Artist a owl:Class ;
+    rdfs:label "Artist"@en ;
+    rdfs:comment "A person who creates artworks."@en ;
+    rdfs:subClassOf crm:E21_Person, schema:Person, arp:Owner .
+
+# -----------------------------------------------------------------------------
+# Provenance Event Class
+# -----------------------------------------------------------------------------
+arp:ProvenanceEvent a owl:Class ;
+    rdfs:label "Provenance Event"@en ;
+    rdfs:comment "An event in the ownership history of an artwork, such as acquisition, sale, gift, or theft."@en ;
+    rdfs:subClassOf prov:Activity, crm:E8_Acquisition .
+
+# -----------------------------------------------------------------------------
+# Owner Class
+# -----------------------------------------------------------------------------
+arp:Owner a owl:Class ;
+    rdfs:label "Owner"@en ;
+    rdfs:comment "A person or organization that owns or has owned an artwork."@en ;
+    rdfs:subClassOf crm:E39_Actor .
+
+# -----------------------------------------------------------------------------
+# Person Owner (subclass of Owner)
+# -----------------------------------------------------------------------------
+arp:PersonOwner a owl:Class ;
+    rdfs:label "Person Owner"@en ;
+    rdfs:comment "An individual person who owns an artwork."@en ;
+    rdfs:subClassOf arp:Owner, schema:Person .
+
+# -----------------------------------------------------------------------------
+# Organization Owner (subclass of Owner)
+# -----------------------------------------------------------------------------
+arp:OrganizationOwner a owl:Class ;
+    rdfs:label "Organization Owner"@en ;
+    rdfs:comment "An organization (museum, gallery, institution) that owns an artwork."@en ;
+    rdfs:subClassOf arp:Owner, schema:Organization .
+
+# -----------------------------------------------------------------------------
+# Location Class
+# -----------------------------------------------------------------------------
+arp:Location a owl:Class ;
+    rdfs:label "Location"@en ;
+    rdfs:comment "A geographic location where an artwork is or was located."@en ;
+    rdfs:subClassOf crm:E53_Place, schema:Place .
+
+# =============================================================================
+# OBJECT PROPERTIES
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# hasProvenanceEvent - Links artwork to its provenance events
+# -----------------------------------------------------------------------------
+arp:hasProvenanceEvent a owl:ObjectProperty ;
+    rdfs:label "has provenance event"@en ;
+    rdfs:comment "Relates an artwork to an event in its ownership history."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range arp:ProvenanceEvent .
+
+# -----------------------------------------------------------------------------
+# fromOwner - Previous owner in a provenance event
+# -----------------------------------------------------------------------------
+arp:fromOwner a owl:ObjectProperty ;
+    rdfs:label "from owner"@en ;
+    rdfs:comment "The owner transferring ownership of the artwork."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range arp:Owner ;
+    rdfs:subPropertyOf prov:wasAssociatedWith .
+
+# -----------------------------------------------------------------------------
+# toOwner - New owner in a provenance event
+# -----------------------------------------------------------------------------
+arp:toOwner a owl:ObjectProperty ;
+    rdfs:label "to owner"@en ;
+    rdfs:comment "The owner receiving ownership of the artwork."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range arp:Owner ;
+    rdfs:subPropertyOf prov:wasAssociatedWith .
+
+# -----------------------------------------------------------------------------
+# currentOwner - Current owner of an artwork
+# -----------------------------------------------------------------------------
+arp:currentOwner a owl:ObjectProperty ;
+    rdfs:label "current owner"@en ;
+    rdfs:comment "The current owner of the artwork."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range arp:Owner .
+
+# -----------------------------------------------------------------------------
+# currentLocation - Current location of an artwork
+# -----------------------------------------------------------------------------
+arp:currentLocation a owl:ObjectProperty ;
+    rdfs:label "current location"@en ;
+    rdfs:comment "The current location where the artwork is displayed or stored."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range arp:Location ;
+    rdfs:subPropertyOf schema:location .
+
+# -----------------------------------------------------------------------------
+# eventLocation - Location where a provenance event occurred
+# -----------------------------------------------------------------------------
+arp:eventLocation a owl:ObjectProperty ;
+    rdfs:label "event location"@en ;
+    rdfs:comment "The location where a provenance event took place."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range arp:Location ;
+    rdfs:subPropertyOf prov:atLocation .
+
+# -----------------------------------------------------------------------------
+# ownerLocation - Location associated with an owner
+# -----------------------------------------------------------------------------
+arp:ownerLocation a owl:ObjectProperty ;
+    rdfs:label "owner location"@en ;
+    rdfs:comment "The location associated with an owner (residence, headquarters)."@en ;
+    rdfs:domain arp:Owner ;
+    rdfs:range arp:Location ;
+    rdfs:subPropertyOf schema:location .
+
+# =============================================================================
+# DATATYPE PROPERTIES
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# provenanceOrder - Order of events in provenance chain
+# -----------------------------------------------------------------------------
+arp:provenanceOrder a owl:DatatypeProperty ;
+    rdfs:label "provenance order"@en ;
+    rdfs:comment "The sequential order of this event in the artwork's provenance chain."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range xsd:integer .
+
+# -----------------------------------------------------------------------------
+# eventType - Type of provenance event
+# -----------------------------------------------------------------------------
+arp:eventType a owl:DatatypeProperty ;
+    rdfs:label "event type"@en ;
+    rdfs:comment "The type of provenance event (sale, gift, inheritance, theft, restitution, etc.)."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range xsd:string .
+
+# -----------------------------------------------------------------------------
+# acquisitionMethod - How artwork was acquired
+# -----------------------------------------------------------------------------
+arp:acquisitionMethod a owl:DatatypeProperty ;
+    rdfs:label "acquisition method"@en ;
+    rdfs:comment "The method by which the artwork was acquired (purchase, commission, donation, etc.)."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range xsd:string .
+
+# -----------------------------------------------------------------------------
+# transactionPrice - Price of transaction
+# -----------------------------------------------------------------------------
+arp:transactionPrice a owl:DatatypeProperty ;
+    rdfs:label "transaction price"@en ;
+    rdfs:comment "The price paid in a sale transaction."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range xsd:decimal .
+
+# -----------------------------------------------------------------------------
+# transactionCurrency - Currency of transaction
+# -----------------------------------------------------------------------------
+arp:transactionCurrency a owl:DatatypeProperty ;
+    rdfs:label "transaction currency"@en ;
+    rdfs:comment "The currency used in a sale transaction."@en ;
+    rdfs:domain arp:ProvenanceEvent ;
+    rdfs:range xsd:string .
+
+# -----------------------------------------------------------------------------
+# creationEndDate - End date for works created over a period
+# -----------------------------------------------------------------------------
+arp:creationEndDate a owl:DatatypeProperty ;
+    rdfs:label "creation end date"@en ;
+    rdfs:comment "The end date for artworks created over an extended period (use with dcterms:created for start date)."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range xsd:gYear .
+
+# -----------------------------------------------------------------------------
+# artworkMedium - Medium/technique of artwork
+# -----------------------------------------------------------------------------
+arp:artworkMedium a owl:DatatypeProperty ;
+    rdfs:label "artwork medium"@en ;
+    rdfs:comment "The medium or technique used to create the artwork (oil on canvas, marble, etc.)."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range xsd:string .
+
+# -----------------------------------------------------------------------------
+# artworkDimensions - Physical dimensions of artwork
+# -----------------------------------------------------------------------------
+arp:artworkDimensions a owl:DatatypeProperty ;
+    rdfs:label "artwork dimensions"@en ;
+    rdfs:comment "The physical dimensions of the artwork."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range xsd:string .
+
+# -----------------------------------------------------------------------------
+# artworkPeriod - Historical period of artwork
+# -----------------------------------------------------------------------------
+arp:artworkPeriod a owl:DatatypeProperty ;
+    rdfs:label "artwork period"@en ;
+    rdfs:comment "The art historical period the artwork belongs to (Renaissance, Impressionism, etc.)."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range xsd:string .
+
+# -----------------------------------------------------------------------------
+# artworkStyle - Style of artwork
+# -----------------------------------------------------------------------------
+arp:artworkStyle a owl:DatatypeProperty ;
+    rdfs:label "artwork style"@en ;
+    rdfs:comment "The artistic style of the artwork."@en ;
+    rdfs:domain arp:Artwork ;
+    rdfs:range xsd:string .
+
+# =============================================================================
+# PROVENANCE EVENT TYPES (Named Individuals for classification)
+# =============================================================================
+
+arp:Sale a arp:ProvenanceEvent ;
+    rdfs:label "Sale"@en ;
+    rdfs:comment "Transfer of ownership through commercial sale."@en .
+
+arp:Gift a arp:ProvenanceEvent ;
+    rdfs:label "Gift"@en ;
+    rdfs:comment "Transfer of ownership as a gift or donation."@en .
+
+arp:Inheritance a arp:ProvenanceEvent ;
+    rdfs:label "Inheritance"@en ;
+    rdfs:comment "Transfer of ownership through inheritance or bequest."@en .
+
+arp:Commission a arp:ProvenanceEvent ;
+    rdfs:label "Commission"@en ;
+    rdfs:comment "Original creation of artwork through commission."@en .
+
+arp:Theft a arp:ProvenanceEvent ;
+    rdfs:label "Theft"@en ;
+    rdfs:comment "Unlawful taking of artwork."@en .
+
+arp:Restitution a arp:ProvenanceEvent ;
+    rdfs:label "Restitution"@en ;
+    rdfs:comment "Return of artwork to rightful owner."@en .
+
+arp:Auction a arp:ProvenanceEvent ;
+    rdfs:label "Auction"@en ;
+    rdfs:comment "Sale of artwork at auction."@en .
+
