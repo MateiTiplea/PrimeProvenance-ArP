@@ -1,0 +1,64 @@
+@prefix fuseki:  <http://jena.apache.org/fuseki#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tdb2:    <http://jena.apache.org/2016/tdb#> .
+@prefix ja:      <http://jena.hpl.hp.com/2005/11/Assembler#> .
+
+# =============================================================================
+# ArP Fuseki Configuration
+# =============================================================================
+# This configuration defines a persistent TDB2 dataset for the ArP application.
+# The dataset provides SPARQL query, update, and Graph Store Protocol endpoints.
+# =============================================================================
+
+# Load TDB2 module
+[] ja:loadClass "org.apache.jena.tdb2.TDB2" .
+
+tdb2:DatasetTDB2 rdfs:subClassOf ja:RDFDataset .
+tdb2:GraphTDB2 rdfs:subClassOf ja:Model .
+
+# =============================================================================
+# Service Definition
+# =============================================================================
+
+:service a fuseki:Service ;
+    fuseki:name "arp" ;
+    
+    # SPARQL Query endpoint
+    fuseki:endpoint [
+        fuseki:operation fuseki:query ;
+        fuseki:name "sparql"
+    ] ;
+    fuseki:endpoint [
+        fuseki:operation fuseki:query ;
+        fuseki:name "query"
+    ] ;
+    
+    # SPARQL Update endpoint
+    fuseki:endpoint [
+        fuseki:operation fuseki:update ;
+        fuseki:name "update"
+    ] ;
+    
+    # Graph Store Protocol (read-write)
+    fuseki:endpoint [
+        fuseki:operation fuseki:gsp-rw ;
+        fuseki:name "data"
+    ] ;
+    
+    # Graph Store Protocol (read-only)
+    fuseki:endpoint [
+        fuseki:operation fuseki:gsp-r ;
+        fuseki:name "get"
+    ] ;
+    
+    # Dataset reference
+    fuseki:dataset :dataset .
+
+# =============================================================================
+# Dataset Definition (TDB2 Persistent Store)
+# =============================================================================
+
+:dataset a tdb2:DatasetTDB2 ;
+    tdb2:location "/fuseki/databases/arp" .
+
