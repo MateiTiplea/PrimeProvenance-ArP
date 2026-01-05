@@ -1,6 +1,8 @@
 FROM stain/jena-fuseki:latest
 
-# Copy custom configuration for the ArP dataset
-# This provides a TDB2 persistent dataset with custom endpoint configuration
+USER root
+RUN mkdir -p /fuseki/configuration /fuseki/databases/arp
+
 COPY config/config.ttl /fuseki/configuration/arp.ttl
 
+RUN chown -R 1000:1000 /fuseki
