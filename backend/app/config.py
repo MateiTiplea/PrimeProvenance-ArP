@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     fuseki_host: str = "fuseki"
     fuseki_port: int = 3030
     fuseki_dataset: str = "arp"
+    fuseki_username: str = "admin"
+    fuseki_password: str = "admin"
     
     @property
     def fuseki_query_endpoint(self) -> str:

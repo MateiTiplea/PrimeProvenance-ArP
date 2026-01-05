@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from .routers.artworks import router as artworks_router
 from .routers.sparql import router as sparql_router
+from .routers.search import router as search_router
 
 app = FastAPI(
     title="ArP API",
@@ -11,6 +12,7 @@ app = FastAPI(
 
 app.include_router(artworks_router, prefix="/api")
 app.include_router(sparql_router, prefix="/api")
+app.include_router(search_router, prefix="/api")
 
 
 @app.get("/")
