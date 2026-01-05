@@ -19,14 +19,24 @@ fuseki/
 
 ### Dockerfile
 
-Extends the official `stain/jena-fuseki` image to include custom configuration:
+Extends the official `stain/jena-fuseki` image to include custom configuration with proper permissions:
 
 ```dockerfile
 FROM stain/jena-fuseki:latest
+
+USER root
+RUN mkdir -p /fuseki/configuration /fuseki/databases/arp
+
 COPY config/config.ttl /fuseki/configuration/arp.ttl
+
+RUN chown -R 1000:1000 /fuseki
 ```
 
-This approach is necessary because Fuseki requires the `/fuseki/configuration` directory to be writable at runtime, making direct volume mounts problematic.
+The Dockerfile:
+- Switches to root to create required directories
+- Creates the TDB2 database directory at `/fuseki/databases/arp`
+- Copies the dataset configuration
+- Sets correct ownership for the fuseki user (uid 1000)
 
 ### config.ttl
 
@@ -43,33 +53,55 @@ Defines a persistent TDB2 dataset named `arp` with the following endpoints:
 
 ### Using Docker Compose (Recommended)
 
-From the project root:
+From the project root, build and start the containers:
 
 ```bash
-docker compose up fuseki
+docker compose build --no-cache && docker compose up -d
 ```
 
 Fuseki will be available at: http://localhost:3030
 
-### Using Docker Directly
+To start only the Fuseki service:
 
 ```bash
-docker run -p 3030:3030 \
-  -v $(pwd)/fuseki/config:/fuseki/configuration \
-  -v fuseki-data:/fuseki \
-  -e ADMIN_PASSWORD=admin \
-  stain/jena-fuseki:latest
+docker compose build --no-cache fuseki && docker compose up -d fuseki
 ```
+
+### Stopping and Cleaning Up
+
+```bash
+# Stop containers
+docker compose down
+
+# Stop and remove volumes (fresh start)
+docker compose down -v
+```
+
+## Authentication
+
+Fuseki uses Apache Shiro for authentication. The default configuration:
+
+| Operation | Authentication Required |
+|-----------|------------------------|
+| Web UI (browsing) | No |
+| SPARQL Query (`/arp/sparql`) | No |
+| SPARQL Update (`/arp/update`) | Yes |
+| Data Upload (`/arp/data`) | Yes |
+| Admin API (`/$/**`) | Yes |
+
+Default credentials: **admin / admin**
+
+Note: The web UI will prompt for credentials when you attempt write operations (upload, update). If authentication doesn't appear to work, try using an incognito browser window to clear any cached credentials.
 
 ## Loading Data
 
 ### Option 1: Via Fuseki UI
 
 1. Open http://localhost:3030 in your browser
-2. Log in with username `admin` and password `admin`
-3. Navigate to the `arp` dataset
-4. Click "Upload data"
-5. Upload `arp-ontology.ttl` and `sample-data.ttl`
+2. Navigate to the `arp` dataset
+3. Click "Upload data"
+4. Upload `arp-ontology.ttl` and `sample-data.ttl`
+5. Log in with `admin` / `admin` when prompted
 
 ### Option 2: Via HTTP API
 
@@ -167,18 +199,28 @@ SELECT ?artwork ?title ?artistName WHERE {
 
 If the `arp` dataset doesn't appear:
 
-1. Check that `config.ttl` is mounted to `/fuseki/configuration/`
-2. Restart the Fuseki container
-3. Check Fuseki logs: `docker logs arp-fuseki`
+1. Rebuild the image without cache: `docker compose build --no-cache fuseki`
+2. Remove existing volumes: `docker compose down -v`
+3. Start fresh: `docker compose up -d`
+4. Check Fuseki logs: `docker logs arp-fuseki`
 
 ### Permission Errors
 
-Ensure the Docker volumes have correct permissions:
+If you see "FUSEKI_BASE is not writable" or similar:
 
 ```bash
-docker-compose down -v
-docker-compose up fuseki
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
 ```
+
+### Configuration Syntax Errors
+
+If logs show "Undefined prefix" or TTL parsing errors:
+
+1. Validate `config.ttl` syntax
+2. Ensure all prefixes are declared (including `@prefix : <#> .`)
+3. Rebuild: `docker compose build --no-cache && docker compose up -d`
 
 ### Query Errors
 
@@ -189,4 +231,3 @@ SELECT (COUNT(*) as ?count) WHERE { ?s ?p ?o }
 ```
 
 Should return the total number of triples in the dataset.
-
