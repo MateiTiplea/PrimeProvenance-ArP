@@ -9,25 +9,29 @@ from .sparql_service import sparql_service
 
 
 # RDF Namespaces and JSON-LD context
-ARP_NS = "http://arp.example.org/ontology#"
-ARP_DATA = "http://arp.example.org/data/"
+# Match the namespace used in fuseki/data/*.ttl files
+ARP_NS = "http://example.org/arp#"
 DC_NS = "http://purl.org/dc/elements/1.1/"
+DCTERMS_NS = "http://purl.org/dc/terms/"
 PROV_NS = "http://www.w3.org/ns/prov#"
+SCHEMA_NS = "http://schema.org/"
 
 JSONLD_CONTEXT = {
     "@vocab": ARP_NS,
     "dc": DC_NS,
+    "dcterms": DCTERMS_NS,
     "prov": PROV_NS,
+    "schema": SCHEMA_NS,
     "title": "dc:title",
-    "artist": "dc:creator",
+    "artist": "schema:name",
     "description": "dc:description",
-    "dateCreated": "dc:date",
-    "medium": "arp:medium",
-    "dimensions": "arp:dimensions",
+    "dateCreated": "dcterms:created",
+    "medium": "arp:artworkMedium",
+    "dimensions": "arp:artworkDimensions",
     "currentLocation": "arp:currentLocation",
-    "period": "arp:period",
-    "style": "arp:style",
-    "imageUrl": "arp:imageUrl"
+    "period": "arp:artworkPeriod",
+    "style": "arp:artworkStyle",
+    "imageUrl": "schema:image"
 }
 
 
@@ -40,11 +44,13 @@ class ArtworkService:
     
     def _uri_to_id(self, uri: str) -> str:
         """Extract ID from full URI."""
-        return uri.replace(ARP_DATA, "") if uri.startswith(ARP_DATA) else uri
+        if uri.startswith(ARP_NS):
+            return uri.replace(ARP_NS, "")
+        return uri
     
     def _id_to_uri(self, id: str) -> str:
         """Convert ID to full URI."""
-        return f"{ARP_DATA}{id}" if not id.startswith("http") else id
+        return f"{ARP_NS}{id}" if not id.startswith("http") else id
     
     def _escape_literal(self, value: str) -> str:
         """Escape special characters in SPARQL literals."""
@@ -77,13 +83,15 @@ class ArtworkService:
         # Count query
         count_query = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         SELECT (COUNT(DISTINCT ?artwork) AS ?total) WHERE {{
             ?artwork a arp:Artwork .
             ?artwork dc:title ?title .
-            OPTIONAL {{ ?artwork dc:creator ?artist }}
-            OPTIONAL {{ ?artwork arp:period ?period }}
+            OPTIONAL {{ ?artwork dc:creator ?artistUri . ?artistUri schema:name ?artist }}
+            OPTIONAL {{ ?artwork arp:artworkPeriod ?period }}
             OPTIONAL {{ ?artwork dc:description ?description }}
             {filter_clause}
         }}
@@ -95,22 +103,24 @@ class ArtworkService:
         # Main query
         query = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         SELECT DISTINCT ?artwork ?title ?artist ?dateCreated ?medium ?dimensions 
                ?description ?imageUrl ?currentLocation ?period ?style
         WHERE {{
             ?artwork a arp:Artwork .
             ?artwork dc:title ?title .
-            OPTIONAL {{ ?artwork dc:creator ?artist }}
-            OPTIONAL {{ ?artwork dc:date ?dateCreated }}
-            OPTIONAL {{ ?artwork arp:medium ?medium }}
-            OPTIONAL {{ ?artwork arp:dimensions ?dimensions }}
+            OPTIONAL {{ ?artwork dc:creator ?artistUri . ?artistUri schema:name ?artist }}
+            OPTIONAL {{ ?artwork dcterms:created ?dateCreated }}
+            OPTIONAL {{ ?artwork arp:artworkMedium ?medium }}
+            OPTIONAL {{ ?artwork arp:artworkDimensions ?dimensions }}
             OPTIONAL {{ ?artwork dc:description ?description }}
-            OPTIONAL {{ ?artwork arp:imageUrl ?imageUrl }}
-            OPTIONAL {{ ?artwork arp:currentLocation ?currentLocation }}
-            OPTIONAL {{ ?artwork arp:period ?period }}
-            OPTIONAL {{ ?artwork arp:style ?style }}
+            OPTIONAL {{ ?artwork schema:image ?imageUrl }}
+            OPTIONAL {{ ?artwork arp:currentLocation ?locUri . ?locUri schema:name ?currentLocation }}
+            OPTIONAL {{ ?artwork arp:artworkPeriod ?period }}
+            OPTIONAL {{ ?artwork arp:artworkStyle ?style }}
             {filter_clause}
         }}
         ORDER BY ?title
@@ -152,22 +162,24 @@ class ArtworkService:
         
         query = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         SELECT ?title ?artist ?dateCreated ?medium ?dimensions 
                ?description ?imageUrl ?currentLocation ?period ?style
         WHERE {{
             <{uri}> a arp:Artwork .
             <{uri}> dc:title ?title .
-            OPTIONAL {{ <{uri}> dc:creator ?artist }}
-            OPTIONAL {{ <{uri}> dc:date ?dateCreated }}
-            OPTIONAL {{ <{uri}> arp:medium ?medium }}
-            OPTIONAL {{ <{uri}> arp:dimensions ?dimensions }}
+            OPTIONAL {{ <{uri}> dc:creator ?artistUri . ?artistUri schema:name ?artist }}
+            OPTIONAL {{ <{uri}> dcterms:created ?dateCreated }}
+            OPTIONAL {{ <{uri}> arp:artworkMedium ?medium }}
+            OPTIONAL {{ <{uri}> arp:artworkDimensions ?dimensions }}
             OPTIONAL {{ <{uri}> dc:description ?description }}
-            OPTIONAL {{ <{uri}> arp:imageUrl ?imageUrl }}
-            OPTIONAL {{ <{uri}> arp:currentLocation ?currentLocation }}
-            OPTIONAL {{ <{uri}> arp:period ?period }}
-            OPTIONAL {{ <{uri}> arp:style ?style }}
+            OPTIONAL {{ <{uri}> schema:image ?imageUrl }}
+            OPTIONAL {{ <{uri}> arp:currentLocation ?locUri . ?locUri schema:name ?currentLocation }}
+            OPTIONAL {{ <{uri}> arp:artworkPeriod ?period }}
+            OPTIONAL {{ <{uri}> arp:artworkStyle ?style }}
         }}
         """
         
@@ -199,36 +211,37 @@ class ArtworkService:
         artwork_id = self._generate_id()
         uri = self._id_to_uri(artwork_id)
         
-        # Build INSERT query with triples
         triples = [
             f'<{uri}> a arp:Artwork',
             f'<{uri}> dc:title "{self._escape_literal(data.title)}"'
         ]
         
         if data.artist:
-            triples.append(f'<{uri}> dc:creator "{self._escape_literal(data.artist)}"')
+            triples.append(f'<{uri}> arp:artistName "{self._escape_literal(data.artist)}"')
         if data.dateCreated:
-            triples.append(f'<{uri}> dc:date "{self._escape_literal(data.dateCreated)}"')
+            triples.append(f'<{uri}> dcterms:created "{self._escape_literal(data.dateCreated)}"')
         if data.medium:
-            triples.append(f'<{uri}> arp:medium "{self._escape_literal(data.medium)}"')
+            triples.append(f'<{uri}> arp:artworkMedium "{self._escape_literal(data.medium)}"')
         if data.dimensions:
-            triples.append(f'<{uri}> arp:dimensions "{self._escape_literal(data.dimensions)}"')
+            triples.append(f'<{uri}> arp:artworkDimensions "{self._escape_literal(data.dimensions)}"')
         if data.description:
             triples.append(f'<{uri}> dc:description "{self._escape_literal(data.description)}"')
         if data.imageUrl:
-            triples.append(f'<{uri}> arp:imageUrl "{self._escape_literal(data.imageUrl)}"')
+            triples.append(f'<{uri}> schema:image <{data.imageUrl}>')
         if data.currentLocation:
-            triples.append(f'<{uri}> arp:currentLocation "{self._escape_literal(data.currentLocation)}"')
+            triples.append(f'<{uri}> arp:currentLocationName "{self._escape_literal(data.currentLocation)}"')
         if data.period:
-            triples.append(f'<{uri}> arp:period "{self._escape_literal(data.period)}"')
+            triples.append(f'<{uri}> arp:artworkPeriod "{self._escape_literal(data.period)}"')
         if data.style:
-            triples.append(f'<{uri}> arp:style "{self._escape_literal(data.style)}"')
+            triples.append(f'<{uri}> arp:artworkStyle "{self._escape_literal(data.style)}"')
         
         triples_str = " .\n    ".join(triples)
         
         update = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         INSERT DATA {{
             {triples_str} .
@@ -260,18 +273,20 @@ class ArtworkService:
         query = f"""
         PREFIX arp: <{ARP_NS}>
         PREFIX prov: <{PROV_NS}>
+        PREFIX dc: <{DC_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         SELECT ?event ?eventType ?date ?owner ?location ?description ?sourceUri ?order
         WHERE {{
-            <{artwork_uri}> arp:hasProvenance ?event .
+            <{artwork_uri}> arp:hasProvenanceEvent ?event .
             ?event a arp:ProvenanceEvent .
             ?event arp:eventType ?eventType .
-            ?event prov:atTime ?date .
-            OPTIONAL {{ ?event arp:owner ?owner }}
-            OPTIONAL {{ ?event arp:location ?location }}
-            OPTIONAL {{ ?event arp:description ?description }}
+            OPTIONAL {{ ?event prov:startedAtTime ?date }}
+            OPTIONAL {{ ?event arp:toOwner ?ownerUri . ?ownerUri schema:name ?owner }}
+            OPTIONAL {{ ?event arp:eventLocation ?locUri . ?locUri schema:name ?location }}
+            OPTIONAL {{ ?event dc:description ?description }}
             OPTIONAL {{ ?event arp:sourceUri ?sourceUri }}
-            OPTIONAL {{ ?event arp:order ?order }}
+            OPTIONAL {{ ?event arp:provenanceOrder ?order }}
         }}
         ORDER BY ?order ?date
         """
@@ -283,7 +298,7 @@ class ArtworkService:
             event = ProvenanceRecord(
                 id=self._uri_to_id(binding["event"]["value"]),
                 event=binding["eventType"]["value"],
-                date=binding["date"]["value"],
+                date=binding.get("date", {}).get("value"),
                 owner=binding.get("owner", {}).get("value"),
                 location=binding.get("location", {}).get("value"),
                 description=binding.get("description", {}).get("value"),
@@ -296,28 +311,26 @@ class ArtworkService:
     
     def update_artwork(self, artwork_id: str, data: 'ArtworkUpdate') -> Optional[ArtworkResponse]:
         """Update an existing artwork."""
-        # First check if artwork exists
         existing = self.get_artwork(artwork_id)
         if not existing:
             return None
         
         uri = self._id_to_uri(artwork_id)
         
-        # Build DELETE/INSERT for each provided field
         delete_triples = []
         insert_triples = []
         
         field_mappings = {
             'title': ('dc:title', data.title),
-            'artist': ('dc:creator', data.artist),
-            'dateCreated': ('dc:date', data.dateCreated),
-            'medium': ('arp:medium', data.medium),
-            'dimensions': ('arp:dimensions', data.dimensions),
+            'artist': ('arp:artistName', data.artist),
+            'dateCreated': ('dcterms:created', data.dateCreated),
+            'medium': ('arp:artworkMedium', data.medium),
+            'dimensions': ('arp:artworkDimensions', data.dimensions),
             'description': ('dc:description', data.description),
-            'imageUrl': ('arp:imageUrl', data.imageUrl),
-            'currentLocation': ('arp:currentLocation', data.currentLocation),
-            'period': ('arp:period', data.period),
-            'style': ('arp:style', data.style),
+            'imageUrl': ('schema:image', data.imageUrl),
+            'currentLocation': ('arp:currentLocationName', data.currentLocation),
+            'period': ('arp:artworkPeriod', data.period),
+            'style': ('arp:artworkStyle', data.style),
         }
         
         for field, (predicate, value) in field_mappings.items():
@@ -326,17 +339,17 @@ class ArtworkService:
                 insert_triples.append(f'<{uri}> {predicate} "{self._escape_literal(value)}"')
         
         if not insert_triples:
-            # No fields to update
             return existing
         
-        # Build the SPARQL UPDATE query
         delete_clause = " .\n        ".join(delete_triples)
         insert_clause = " .\n        ".join(insert_triples)
         optional_clauses = "\n        ".join([f'OPTIONAL {{ {t} }}' for t in delete_triples])
         
         update = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         DELETE {{
             {delete_clause} .
@@ -351,20 +364,16 @@ class ArtworkService:
         """
         
         sparql_service.execute_update(update)
-        
-        # Return the updated artwork
         return self.get_artwork(artwork_id)
     
     def delete_artwork(self, artwork_id: str) -> bool:
         """Delete an artwork and its provenance."""
         uri = self._id_to_uri(artwork_id)
         
-        # First check if artwork exists
         existing = self.get_artwork(artwork_id)
         if not existing:
             return False
         
-        # Delete all triples related to this artwork (including provenance)
         update = f"""
         PREFIX arp: <{ARP_NS}>
         
@@ -375,7 +384,7 @@ class ArtworkService:
         WHERE {{
             <{uri}> ?p ?o .
             OPTIONAL {{
-                <{uri}> arp:hasProvenance ?prov .
+                <{uri}> arp:hasProvenanceEvent ?prov .
                 ?prov ?pp ?po .
             }}
         }}
@@ -390,15 +399,14 @@ class ArtworkService:
         
         artwork_uri = self._id_to_uri(artwork_id)
         event_id = f"provenance_{uuid.uuid4().hex[:12]}"
-        event_uri = f"{ARP_DATA}{event_id}"
+        event_uri = f"{ARP_NS}{event_id}"
         
-        # Get current max order
         order_query = f"""
         PREFIX arp: <{ARP_NS}>
         
         SELECT (MAX(?order) AS ?maxOrder) WHERE {{
-            <{artwork_uri}> arp:hasProvenance ?event .
-            OPTIONAL {{ ?event arp:order ?order }}
+            <{artwork_uri}> arp:hasProvenanceEvent ?event .
+            OPTIONAL {{ ?event arp:provenanceOrder ?order }}
         }}
         """
         order_result = sparql_service.execute_query(order_query)
@@ -409,13 +417,12 @@ class ArtworkService:
                 max_order = int(max_val)
         new_order = max_order + 1
         
-        # Build INSERT query
         triples = [
-            f'<{artwork_uri}> arp:hasProvenance <{event_uri}>',
+            f'<{artwork_uri}> arp:hasProvenanceEvent <{event_uri}>',
             f'<{event_uri}> a arp:ProvenanceEvent',
             f'<{event_uri}> arp:eventType "{self._escape_literal(data.event.value)}"',
-            f'<{event_uri}> prov:atTime "{self._escape_literal(data.date)}"',
-            f'<{event_uri}> arp:order {new_order}',
+            f'<{event_uri}> prov:startedAtTime "{self._escape_literal(data.date)}"',
+            f'<{event_uri}> arp:provenanceOrder {new_order}',
         ]
         
         if data.owner:
@@ -457,13 +464,11 @@ class ArtworkService:
         
         event_uri = self._id_to_uri(event_id)
         
-        # Check if event exists
         check_query = f"""
         PREFIX arp: <{ARP_NS}>
         
         ASK {{ <{event_uri}> a arp:ProvenanceEvent }}
         """
-        # For ASK queries, we need to handle differently
         try:
             result = sparql_service.execute_query(check_query)
             if not result.get("boolean", False):
@@ -471,7 +476,6 @@ class ArtworkService:
         except:
             return None
         
-        # Build DELETE/INSERT for provided fields
         delete_triples = []
         insert_triples = []
         
@@ -479,8 +483,8 @@ class ArtworkService:
             delete_triples.append(f'<{event_uri}> arp:eventType ?oldEventType')
             insert_triples.append(f'<{event_uri}> arp:eventType "{self._escape_literal(data.event.value)}"')
         if data.date is not None:
-            delete_triples.append(f'<{event_uri}> prov:atTime ?oldDate')
-            insert_triples.append(f'<{event_uri}> prov:atTime "{self._escape_literal(data.date)}"')
+            delete_triples.append(f'<{event_uri}> prov:startedAtTime ?oldDate')
+            insert_triples.append(f'<{event_uri}> prov:startedAtTime "{self._escape_literal(data.date)}"')
         if data.owner is not None:
             delete_triples.append(f'<{event_uri}> arp:owner ?oldOwner')
             insert_triples.append(f'<{event_uri}> arp:owner "{self._escape_literal(data.owner)}"')
@@ -495,7 +499,6 @@ class ArtworkService:
             insert_triples.append(f'<{event_uri}> arp:sourceUri "{self._escape_literal(data.sourceUri)}"')
         
         if not insert_triples:
-            # Fetch and return current event
             events = self.get_provenance(artwork_id)
             return next((e for e in events if e.id == event_id), None)
         
@@ -521,7 +524,6 @@ class ArtworkService:
         
         sparql_service.execute_update(update)
         
-        # Return updated event
         events = self.get_provenance(artwork_id)
         return next((e for e in events if e.id == event_id), None)
     
@@ -530,16 +532,15 @@ class ArtworkService:
         artwork_uri = self._id_to_uri(artwork_id)
         event_uri = self._id_to_uri(event_id)
         
-        # Delete all triples related to this event
         update = f"""
         PREFIX arp: <{ARP_NS}>
         
         DELETE {{
-            <{artwork_uri}> arp:hasProvenance <{event_uri}> .
+            <{artwork_uri}> arp:hasProvenanceEvent <{event_uri}> .
             <{event_uri}> ?p ?o .
         }}
         WHERE {{
-            <{artwork_uri}> arp:hasProvenance <{event_uri}> .
+            <{artwork_uri}> arp:hasProvenanceEvent <{event_uri}> .
             <{event_uri}> ?p ?o .
         }}
         """
@@ -557,11 +558,9 @@ class ArtworkService:
         """Full-text search across artworks."""
         offset = (page - 1) * limit
         
-        # Default search fields
         if not fields:
             fields = ['title', 'artist', 'description']
         
-        # Build filter for each field
         field_mappings = {
             'title': '?title',
             'artist': '?artist',
@@ -579,15 +578,16 @@ class ArtworkService:
         
         filter_expression = " || ".join(search_filters)
         
-        # Count query
         count_query = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         SELECT (COUNT(DISTINCT ?artwork) AS ?total) WHERE {{
             ?artwork a arp:Artwork .
             ?artwork dc:title ?title .
-            OPTIONAL {{ ?artwork dc:creator ?artist }}
+            OPTIONAL {{ ?artwork dc:creator ?artistUri . ?artistUri schema:name ?artist }}
             OPTIONAL {{ ?artwork dc:description ?description }}
             FILTER({filter_expression})
         }}
@@ -596,25 +596,26 @@ class ArtworkService:
         count_result = sparql_service.execute_query(count_query)
         total = int(count_result["results"]["bindings"][0]["total"]["value"]) if count_result["results"]["bindings"] else 0
         
-        # Main search query
         query = f"""
         PREFIX dc: <{DC_NS}>
+        PREFIX dcterms: <{DCTERMS_NS}>
         PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
         
         SELECT DISTINCT ?artwork ?title ?artist ?dateCreated ?medium ?dimensions 
                ?description ?imageUrl ?currentLocation ?period ?style
         WHERE {{
             ?artwork a arp:Artwork .
             ?artwork dc:title ?title .
-            OPTIONAL {{ ?artwork dc:creator ?artist }}
-            OPTIONAL {{ ?artwork dc:date ?dateCreated }}
-            OPTIONAL {{ ?artwork arp:medium ?medium }}
-            OPTIONAL {{ ?artwork arp:dimensions ?dimensions }}
+            OPTIONAL {{ ?artwork dc:creator ?artistUri . ?artistUri schema:name ?artist }}
+            OPTIONAL {{ ?artwork dcterms:created ?dateCreated }}
+            OPTIONAL {{ ?artwork arp:artworkMedium ?medium }}
+            OPTIONAL {{ ?artwork arp:artworkDimensions ?dimensions }}
             OPTIONAL {{ ?artwork dc:description ?description }}
-            OPTIONAL {{ ?artwork arp:imageUrl ?imageUrl }}
-            OPTIONAL {{ ?artwork arp:currentLocation ?currentLocation }}
-            OPTIONAL {{ ?artwork arp:period ?period }}
-            OPTIONAL {{ ?artwork arp:style ?style }}
+            OPTIONAL {{ ?artwork schema:image ?imageUrl }}
+            OPTIONAL {{ ?artwork arp:currentLocation ?locUri . ?locUri schema:name ?currentLocation }}
+            OPTIONAL {{ ?artwork arp:artworkPeriod ?period }}
+            OPTIONAL {{ ?artwork arp:artworkStyle ?style }}
             FILTER({filter_expression})
         }}
         ORDER BY ?title
@@ -651,4 +652,3 @@ class ArtworkService:
 
 
 artwork_service = ArtworkService()
-

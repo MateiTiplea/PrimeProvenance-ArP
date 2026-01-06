@@ -6,7 +6,6 @@ from .artwork import (
     ArtworkUpdate,
     ArtworkResponse,
     ArtworkListResponse,
-    ExternalLinks,
 )
 from .provenance import (
     ProvenanceEventType,
@@ -22,10 +21,10 @@ __all__ = [
     "ArtworkUpdate",
     "ArtworkResponse",
     "ArtworkListResponse",
-    "ExternalLinks",
     "ProvenanceEventType",
     "ProvenanceRecord",
     "ProvenanceEventCreate",
     "ProvenanceEventUpdate",
     "ProvenanceChainResponse",
 ]
+

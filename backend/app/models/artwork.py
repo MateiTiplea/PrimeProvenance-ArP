@@ -4,14 +4,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Any, Dict
 
 
-class ExternalLinks(BaseModel):
-    """External linked data references."""
-    
-    dbpedia: Optional[str] = None
-    wikidata: Optional[str] = None
-    getty: Optional[str] = None
-
-
 class ArtworkBase(BaseModel):
     """Base artwork properties for create/update operations."""
     
@@ -51,8 +43,6 @@ class ArtworkResponse(ArtworkBase):
     """Schema for artwork response with JSON-LD context."""
     
     id: str
-    artistUri: Optional[str] = None
-    externalLinks: Optional[ExternalLinks] = None
     
     # JSON-LD context
     context: Optional[Dict[str, Any]] = Field(None, alias="@context")

@@ -18,11 +18,7 @@ async def list_artworks(
     period: Optional[str] = Query(None, description="Filter by art period"),
     search: Optional[str] = Query(None, description="Search term")
 ):
-    """
-    List artworks with pagination and optional filtering.
-    
-    Returns a paginated list of artworks in JSON-LD format.
-    """
+    """List artworks with pagination and optional filtering."""
     try:
         return artwork_service.list_artworks(
             page=page,
@@ -37,11 +33,7 @@ async def list_artworks(
 
 @router.get("/{artwork_id}", response_model=ArtworkResponse)
 async def get_artwork(artwork_id: str):
-    """
-    Get a single artwork by ID.
-    
-    Returns the artwork with full details in JSON-LD format.
-    """
+    """Get a single artwork by ID."""
     try:
         artwork = artwork_service.get_artwork(artwork_id)
         if not artwork:
@@ -55,12 +47,7 @@ async def get_artwork(artwork_id: str):
 
 @router.post("/", response_model=ArtworkResponse, status_code=201)
 async def create_artwork(artwork: ArtworkCreate):
-    """
-    Create a new artwork.
-    
-    Stores the artwork in the Fuseki triplestore and returns the created
-    artwork with its assigned ID in JSON-LD format.
-    """
+    """Create a new artwork."""
     try:
         return artwork_service.create_artwork(artwork)
     except Exception as e:
@@ -69,11 +56,7 @@ async def create_artwork(artwork: ArtworkCreate):
 
 @router.put("/{artwork_id}", response_model=ArtworkResponse)
 async def update_artwork(artwork_id: str, artwork: ArtworkUpdate):
-    """
-    Update an existing artwork.
-    
-    Updates only the provided fields. Returns the updated artwork in JSON-LD format.
-    """
+    """Update an existing artwork."""
     try:
         updated = artwork_service.update_artwork(artwork_id, artwork)
         if not updated:
@@ -87,11 +70,7 @@ async def update_artwork(artwork_id: str, artwork: ArtworkUpdate):
 
 @router.delete("/{artwork_id}", status_code=204)
 async def delete_artwork(artwork_id: str):
-    """
-    Delete an artwork and its provenance history.
-    
-    This operation cannot be undone.
-    """
+    """Delete an artwork and its provenance history."""
     try:
         deleted = artwork_service.delete_artwork(artwork_id)
         if not deleted:
@@ -107,13 +86,8 @@ async def delete_artwork(artwork_id: str):
 
 @router.get("/{artwork_id}/provenance", response_model=List[ProvenanceRecord])
 async def get_provenance(artwork_id: str):
-    """
-    Get provenance history for an artwork.
-    
-    Returns a list of provenance events (ownership history) ordered chronologically.
-    """
+    """Get provenance history for an artwork."""
     try:
-        # First verify the artwork exists
         artwork = artwork_service.get_artwork(artwork_id)
         if not artwork:
             raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
@@ -127,14 +101,8 @@ async def get_provenance(artwork_id: str):
 
 @router.post("/{artwork_id}/provenance", response_model=ProvenanceRecord, status_code=201)
 async def add_provenance_event(artwork_id: str, event: ProvenanceEventCreate):
-    """
-    Add a provenance event to an artwork.
-    
-    Creates a new provenance record and returns it with an assigned ID.
-    Events are automatically ordered based on creation time.
-    """
+    """Add a provenance event to an artwork."""
     try:
-        # First verify the artwork exists
         artwork = artwork_service.get_artwork(artwork_id)
         if not artwork:
             raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
@@ -148,13 +116,8 @@ async def add_provenance_event(artwork_id: str, event: ProvenanceEventCreate):
 
 @router.put("/{artwork_id}/provenance/{event_id}", response_model=ProvenanceRecord)
 async def update_provenance_event(artwork_id: str, event_id: str, event: ProvenanceEventUpdate):
-    """
-    Update a provenance event.
-    
-    Updates only the provided fields. Returns the updated event.
-    """
+    """Update a provenance event."""
     try:
-        # First verify the artwork exists
         artwork = artwork_service.get_artwork(artwork_id)
         if not artwork:
             raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
@@ -171,13 +134,8 @@ async def update_provenance_event(artwork_id: str, event_id: str, event: Provena
 
 @router.delete("/{artwork_id}/provenance/{event_id}", status_code=204)
 async def delete_provenance_event(artwork_id: str, event_id: str):
-    """
-    Delete a provenance event.
-    
-    This operation cannot be undone.
-    """
+    """Delete a provenance event."""
     try:
-        # First verify the artwork exists
         artwork = artwork_service.get_artwork(artwork_id)
         if not artwork:
             raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
@@ -188,4 +146,3 @@ async def delete_provenance_event(artwork_id: str, event_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting provenance event: {str(e)}")
-

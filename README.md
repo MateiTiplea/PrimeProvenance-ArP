@@ -179,10 +179,10 @@ _Detailed deployment instructions will be added._
 <!-- Roadmap -->
 ## :compass: Roadmap
 
-- [ ] Project setup and architecture design
-- [ ] Core RDF data model and ontology
-- [ ] SPARQL endpoint integration
-- [ ] REST API implementation
+- [x] Project setup and architecture design
+- [x] Core RDF data model and ontology
+- [x] SPARQL endpoint integration
+- [x] REST API implementation
 - [ ] Web client with RDFa markup
 - [ ] Integration with DBpedia/Wikidata
 - [ ] Getty Vocabularies integration
