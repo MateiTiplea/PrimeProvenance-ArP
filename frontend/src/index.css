@@ -70,3 +70,18 @@ h1, h2, h3, h4, h5, h6 {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
 }
+
+/* Prevent layout shifts from image loading */
+img {
+  content-visibility: auto;
+}
+
+/* Artwork card image container - prevent reflow */
+.aspect-\[4\/3\] {
+  contain: layout;
+}
+
+/* Improve scrolling performance */
+.grid {
+  contain: layout style;
+}

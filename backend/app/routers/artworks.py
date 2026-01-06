@@ -5,7 +5,7 @@ from typing import Optional, List
 
 from ..models.artwork import ArtworkCreate, ArtworkUpdate, ArtworkResponse, ArtworkListResponse
 from ..models.provenance import ProvenanceRecord, ProvenanceEventCreate, ProvenanceEventUpdate
-from ..models.external import ArtworkEnrichment, DBpediaArtworkInfo, WikidataArtworkInfo, GettyTerm, DBpediaArtistInfo, WikidataArtistInfo
+from ..models.external import ArtworkEnrichment, DBpediaArtworkInfo, WikidataArtworkInfo, GettyTerm, DBpediaArtistInfo, WikidataArtistInfo, LocalArtistInfo
 from ..services.artwork_service import artwork_service
 from ..services.external_sparql_service import external_sparql_service
 from ..services.sparql_service import sparql_service
@@ -186,20 +186,26 @@ async def enrich_artwork(artwork_id: str):
         # Build full URI
         artwork_uri = f"{ARP_NS}{artwork_id}"
         
-        # Query local Fuseki for owl:sameAs links and Getty material URIs
+        # Query local Fuseki for owl:sameAs links, Getty material URIs, and local artist info
         query = f"""
         PREFIX owl: <{OWL_NS}>
         PREFIX schema: <{SCHEMA_NS}>
         PREFIX arp: <{ARP_NS}>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
         
-        SELECT ?sameAs ?artMedium ?artistUri ?artistSameAs WHERE {{
+        SELECT ?sameAs ?artMedium ?artistUri ?artistSameAs 
+               ?artistName ?artistBirthDate ?artistDeathDate ?artistNationality ?artistDescription WHERE {{
             <{artwork_uri}> a arp:Artwork .
             OPTIONAL {{ <{artwork_uri}> owl:sameAs ?sameAs }}
             OPTIONAL {{ <{artwork_uri}> schema:artMedium ?artMedium }}
             OPTIONAL {{ 
                 <{artwork_uri}> dc:creator ?artistUri .
                 OPTIONAL {{ ?artistUri owl:sameAs ?artistSameAs }}
+                OPTIONAL {{ ?artistUri schema:name ?artistName }}
+                OPTIONAL {{ ?artistUri schema:birthDate ?artistBirthDate }}
+                OPTIONAL {{ ?artistUri schema:deathDate ?artistDeathDate }}
+                OPTIONAL {{ ?artistUri schema:nationality ?artistNationality }}
+                OPTIONAL {{ ?artistUri dc:description ?artistDescription }}
             }}
         }}
         """
@@ -212,6 +218,7 @@ async def enrich_artwork(artwork_id: str):
         getty_uris = []
         artist_dbpedia_uri = None
         artist_wikidata_uri = None
+        local_artist_info = None
         
         for binding in result.get("results", {}).get("bindings", []):
             # Extract sameAs links
@@ -232,6 +239,20 @@ async def enrich_artwork(artwork_id: str):
                 artist_dbpedia_uri = artist_same_as
             elif "wikidata.org" in artist_same_as:
                 artist_wikidata_uri = artist_same_as
+            
+            # Extract local artist info (only once)
+            if local_artist_info is None:
+                artist_uri = binding.get("artistUri", {}).get("value")
+                artist_name = binding.get("artistName", {}).get("value")
+                if artist_uri or artist_name:
+                    local_artist_info = LocalArtistInfo(
+                        uri=artist_uri,
+                        name=artist_name,
+                        birthDate=binding.get("artistBirthDate", {}).get("value"),
+                        deathDate=binding.get("artistDeathDate", {}).get("value"),
+                        nationality=binding.get("artistNationality", {}).get("value"),
+                        description=binding.get("artistDescription", {}).get("value")
+                    )
         
         # Fetch external data
         enrichment = ArtworkEnrichment(artwork_id=artwork_id)
@@ -263,6 +284,10 @@ async def enrich_artwork(artwork_id: str):
             data = external_sparql_service.get_wikidata_artist_info(artist_wikidata_uri)
             if "error" not in data:
                 enrichment.artist_wikidata = WikidataArtistInfo(**data)
+        
+        # Include local artist info
+        if local_artist_info:
+            enrichment.artist_local = local_artist_info
         
         return enrichment
         
