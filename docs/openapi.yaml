@@ -11,6 +11,7 @@ info:
     - Full-text search with faceted filtering
     - Artwork recommendations
     - QR code generation for artwork identification
+    - **External SPARQL Integration**: Query DBpedia, Wikidata, and Getty AAT for enriched artwork metadata
   version: 1.0.0
   contact:
     name: ArP Development Team
@@ -37,6 +38,8 @@ tags:
     description: Artwork recommendations
   - name: qr
     description: QR code generation
+  - name: external
+    description: External SPARQL integration (DBpedia, Wikidata, Getty AAT)
 
 paths:
   # ============================================
@@ -439,6 +442,171 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  # ============================================
+  # EXTERNAL SPARQL INTEGRATION
+  # ============================================
+  /artworks/{id}/enrich:
+    parameters:
+      - $ref: '#/components/parameters/ArtworkId'
+
+    get:
+      tags: [external]
+      summary: Enrich artwork with external data
+      description: |
+        Fetch and combine external data for an artwork from DBpedia, Wikidata, and Getty AAT.
+        
+        This endpoint:
+        1. Queries the local Fuseki triplestore for owl:sameAs links
+        2. Fetches data from each linked external source
+        3. Returns combined enrichment data including artist information
+        
+        Results are cached for performance.
+      operationId: enrichArtwork
+      responses:
+        '200':
+          description: Enrichment data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtworkEnrichment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /external/dbpedia/artwork/{resource}:
+    get:
+      tags: [external]
+      summary: Query DBpedia for artwork information
+      description: Fetch artwork metadata from DBpedia including abstract, thumbnail, artist, and museum information.
+      operationId: getDbpediaArtwork
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          description: "DBpedia resource name or full URI (e.g., 'Mona_Lisa')"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: DBpedia data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalQueryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /external/dbpedia/artist/{resource}:
+    get:
+      tags: [external]
+      summary: Query DBpedia for artist information
+      description: Fetch artist biographical data from DBpedia including birth/death dates, nationality, and art movement.
+      operationId: getDbpediaArtist
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          description: "DBpedia resource name or full URI (e.g., 'Leonardo_da_Vinci')"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: DBpedia artist data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalQueryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /external/wikidata/artwork/{entity}:
+    get:
+      tags: [external]
+      summary: Query Wikidata for artwork information
+      description: Fetch artwork metadata from Wikidata including image, inception date, materials, and location.
+      operationId: getWikidataArtwork
+      parameters:
+        - name: entity
+          in: path
+          required: true
+          description: "Wikidata Q-ID or full URI (e.g., 'Q12418')"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wikidata data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalQueryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /external/wikidata/artist/{entity}:
+    get:
+      tags: [external]
+      summary: Query Wikidata for artist information
+      description: Fetch artist biographical data from Wikidata including birth/death dates, nationality, and occupation.
+      operationId: getWikidataArtist
+      parameters:
+        - name: entity
+          in: path
+          required: true
+          description: "Wikidata Q-ID or full URI (e.g., 'Q762' for Leonardo da Vinci)"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wikidata artist data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalQueryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /external/getty/{aat_id}:
+    get:
+      tags: [external]
+      summary: Query Getty AAT for term information
+      description: Fetch term information from Getty Art & Architecture Thesaurus including preferred label and scope note.
+      operationId: getGettyTerm
+      parameters:
+        - name: aat_id
+          in: path
+          required: true
+          description: "Getty AAT ID (e.g., '300015050' for oil paint)"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Getty AAT term retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalQueryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /external/cache/clear:
+    post:
+      tags: [external]
+      summary: Clear external query cache
+      description: Clear all cached external query results.
+      operationId: clearCache
+      responses:
+        '200':
+          description: Cache cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cache cleared successfully"
+
 # ============================================
 # COMPONENTS
 # ============================================
@@ -813,6 +981,134 @@ components:
           type: string
         count:
           type: integer
+
+    # ----------------------------------------
+    # External Integration Schemas
+    # ----------------------------------------
+    LinkedEntity:
+      type: object
+      description: A linked entity with URI and label
+      properties:
+        uri:
+          type: string
+          format: uri
+          description: Entity URI
+        label:
+          type: string
+          description: Human-readable label
+
+    ExternalQueryResponse:
+      type: object
+      description: Generic response for external SPARQL queries
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          additionalProperties: true
+        error:
+          type: string
+        source:
+          type: string
+          enum: [dbpedia, wikidata, getty]
+
+    DBpediaInfo:
+      type: object
+      description: Information retrieved from DBpedia
+      properties:
+        source:
+          type: string
+          example: "dbpedia"
+        uri:
+          type: string
+          format: uri
+        abstract:
+          type: string
+          description: English abstract from DBpedia
+        thumbnail:
+          type: string
+          format: uri
+          description: Thumbnail image URL
+        artist:
+          $ref: '#/components/schemas/LinkedEntity'
+        museum:
+          $ref: '#/components/schemas/LinkedEntity'
+        wikidata_uri:
+          type: string
+          format: uri
+
+    WikidataInfo:
+      type: object
+      description: Information retrieved from Wikidata
+      properties:
+        source:
+          type: string
+          example: "wikidata"
+        uri:
+          type: string
+          format: uri
+        qid:
+          type: string
+          description: Wikidata Q-ID
+          example: "Q12418"
+        image:
+          type: string
+          format: uri
+        inception:
+          type: string
+          description: Date of creation
+        creator:
+          $ref: '#/components/schemas/LinkedEntity'
+        location:
+          $ref: '#/components/schemas/LinkedEntity'
+        material:
+          $ref: '#/components/schemas/LinkedEntity'
+        genre:
+          $ref: '#/components/schemas/LinkedEntity'
+        movement:
+          $ref: '#/components/schemas/LinkedEntity'
+
+    GettyTerm:
+      type: object
+      description: Getty AAT term information
+      properties:
+        source:
+          type: string
+          example: "getty"
+        uri:
+          type: string
+          format: uri
+        prefLabel:
+          type: string
+          description: Preferred label in English
+          example: "oil paint"
+        scopeNote:
+          type: string
+          description: Definition or scope note
+        broader:
+          $ref: '#/components/schemas/LinkedEntity'
+
+    ArtworkEnrichment:
+      type: object
+      description: Combined enrichment data from external sources
+      required: [artwork_id]
+      properties:
+        artwork_id:
+          type: string
+          description: The artwork identifier
+          example: "artwork_mona_lisa"
+        dbpedia:
+          $ref: '#/components/schemas/DBpediaInfo'
+        wikidata:
+          $ref: '#/components/schemas/WikidataInfo'
+        getty:
+          type: array
+          items:
+            $ref: '#/components/schemas/GettyTerm'
+        artist_dbpedia:
+          $ref: '#/components/schemas/DBpediaInfo'
+        artist_wikidata:
+          $ref: '#/components/schemas/WikidataInfo'
 
     # ----------------------------------------
     # Error Schemas

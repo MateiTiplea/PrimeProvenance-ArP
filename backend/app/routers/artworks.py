@@ -5,7 +5,10 @@ from typing import Optional, List
 
 from ..models.artwork import ArtworkCreate, ArtworkUpdate, ArtworkResponse, ArtworkListResponse
 from ..models.provenance import ProvenanceRecord, ProvenanceEventCreate, ProvenanceEventUpdate
+from ..models.external import ArtworkEnrichment, DBpediaArtworkInfo, WikidataArtworkInfo, GettyTerm, DBpediaArtistInfo, WikidataArtistInfo
 from ..services.artwork_service import artwork_service
+from ..services.external_sparql_service import external_sparql_service
+from ..services.sparql_service import sparql_service
 
 router = APIRouter(prefix="/artworks", tags=["artworks"])
 
@@ -146,3 +149,124 @@ async def delete_provenance_event(artwork_id: str, event_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting provenance event: {str(e)}")
+
+
+# --- External Enrichment Endpoint ---
+
+# Namespace constants
+ARP_NS = "http://example.org/arp#"
+OWL_NS = "http://www.w3.org/2002/07/owl#"
+SCHEMA_NS = "http://schema.org/"
+
+
+@router.get(
+    "/{artwork_id}/enrich",
+    response_model=ArtworkEnrichment,
+    tags=["external"],
+    summary="Enrich artwork with external data",
+    description="""
+    Fetch and combine external data for an artwork from DBpedia, Wikidata, and Getty AAT.
+    
+    This endpoint:
+    1. Queries the local Fuseki triplestore for owl:sameAs links
+    2. Fetches data from each linked external source
+    3. Returns combined enrichment data including artist information
+    
+    Results are cached for performance.
+    """
+)
+async def enrich_artwork(artwork_id: str):
+    """Enrich artwork data from external sources (DBpedia, Wikidata, Getty AAT)."""
+    try:
+        # Verify artwork exists
+        artwork = artwork_service.get_artwork(artwork_id)
+        if not artwork:
+            raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
+        
+        # Build full URI
+        artwork_uri = f"{ARP_NS}{artwork_id}"
+        
+        # Query local Fuseki for owl:sameAs links and Getty material URIs
+        query = f"""
+        PREFIX owl: <{OWL_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
+        PREFIX arp: <{ARP_NS}>
+        PREFIX dc: <http://purl.org/dc/elements/1.1/>
+        
+        SELECT ?sameAs ?artMedium ?artistUri ?artistSameAs WHERE {{
+            <{artwork_uri}> a arp:Artwork .
+            OPTIONAL {{ <{artwork_uri}> owl:sameAs ?sameAs }}
+            OPTIONAL {{ <{artwork_uri}> schema:artMedium ?artMedium }}
+            OPTIONAL {{ 
+                <{artwork_uri}> dc:creator ?artistUri .
+                OPTIONAL {{ ?artistUri owl:sameAs ?artistSameAs }}
+            }}
+        }}
+        """
+        
+        result = sparql_service.execute_query(query)
+        
+        # Extract URIs from results
+        dbpedia_uri = None
+        wikidata_uri = None
+        getty_uris = []
+        artist_dbpedia_uri = None
+        artist_wikidata_uri = None
+        
+        for binding in result.get("results", {}).get("bindings", []):
+            # Extract sameAs links
+            same_as = binding.get("sameAs", {}).get("value", "")
+            if "dbpedia.org" in same_as:
+                dbpedia_uri = same_as
+            elif "wikidata.org" in same_as:
+                wikidata_uri = same_as
+            
+            # Extract Getty material URIs
+            art_medium = binding.get("artMedium", {}).get("value", "")
+            if "vocab.getty.edu" in art_medium and art_medium not in getty_uris:
+                getty_uris.append(art_medium)
+            
+            # Extract artist sameAs links
+            artist_same_as = binding.get("artistSameAs", {}).get("value", "")
+            if "dbpedia.org" in artist_same_as:
+                artist_dbpedia_uri = artist_same_as
+            elif "wikidata.org" in artist_same_as:
+                artist_wikidata_uri = artist_same_as
+        
+        # Fetch external data
+        enrichment = ArtworkEnrichment(artwork_id=artwork_id)
+        
+        if dbpedia_uri:
+            data = external_sparql_service.get_dbpedia_artwork_info(dbpedia_uri)
+            if "error" not in data:
+                enrichment.dbpedia = DBpediaArtworkInfo(**data)
+        
+        if wikidata_uri:
+            data = external_sparql_service.get_wikidata_artwork_info(wikidata_uri)
+            if "error" not in data:
+                enrichment.wikidata = WikidataArtworkInfo(**data)
+        
+        if getty_uris:
+            getty_terms = []
+            for uri in getty_uris:
+                data = external_sparql_service.get_getty_term(uri)
+                if "error" not in data:
+                    getty_terms.append(GettyTerm(**data))
+            enrichment.getty = getty_terms if getty_terms else None
+        
+        if artist_dbpedia_uri:
+            data = external_sparql_service.get_dbpedia_artist_info(artist_dbpedia_uri)
+            if "error" not in data:
+                enrichment.artist_dbpedia = DBpediaArtistInfo(**data)
+        
+        if artist_wikidata_uri:
+            data = external_sparql_service.get_wikidata_artist_info(artist_wikidata_uri)
+            if "error" not in data:
+                enrichment.artist_wikidata = WikidataArtistInfo(**data)
+        
+        return enrichment
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error enriching artwork: {str(e)}")
