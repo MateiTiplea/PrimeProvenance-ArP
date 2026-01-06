@@ -1,6 +1,6 @@
 """Provenance data models."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List
 from enum import Enum
 
@@ -17,14 +17,18 @@ class ProvenanceEventType(str, Enum):
     LOAN = "Loan"
     RETURN = "Return"
     ACQUISITION = "Acquisition"
+    COMMISSION = "Commission"
+    INHERITANCE = "Inheritance"
+    TRANSFER = "Transfer"
+    NATIONALIZATION = "Nationalization"
 
 
 class ProvenanceRecord(BaseModel):
     """A single provenance event in an artwork's history."""
     
     id: str
-    date: str
-    event: ProvenanceEventType
+    event: str
+    date: Optional[str] = None
     owner: Optional[str] = None
     location: Optional[str] = None
     description: Optional[str] = None
