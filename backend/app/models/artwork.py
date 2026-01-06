@@ -39,10 +39,21 @@ class ArtworkUpdate(BaseModel):
     style: Optional[str] = None
 
 
+class ExternalLinks(BaseModel):
+    """External links to DBpedia, Wikidata, Getty AAT."""
+    
+    dbpedia: Optional[str] = None
+    wikidata: Optional[str] = None
+    getty: Optional[str] = None
+
+
 class ArtworkResponse(ArtworkBase):
     """Schema for artwork response with JSON-LD context."""
     
     id: str
+    
+    # External links from owl:sameAs
+    externalLinks: Optional[ExternalLinks] = None
     
     # JSON-LD context
     context: Optional[Dict[str, Any]] = Field(None, alias="@context")

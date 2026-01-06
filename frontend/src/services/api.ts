@@ -66,8 +66,14 @@ export const api = {
 
 // Artwork-specific API endpoints
 export const artworkApi = {
-  // Get all artworks with optional pagination
-  getAll: (params?: { page?: number; limit?: number; search?: string }) => 
+  // Get all artworks with optional pagination and filtering
+  getAll: (params?: { 
+    page?: number; 
+    limit?: number; 
+    search?: string;
+    artist?: string;
+    period?: string;
+  }) => 
     api.get<ArtworkListResponse>('/artworks', { params }),
   
   // Get single artwork by ID
@@ -77,6 +83,10 @@ export const artworkApi = {
   // Get artwork provenance history
   getProvenance: (id: string) => 
     api.get<ProvenanceRecord[]>(`/artworks/${id}/provenance`),
+  
+  // Get enrichment data from external sources
+  getEnrichment: (id: string) => 
+    api.get<ArtworkEnrichment>(`/artworks/${id}/enrich`),
   
   // Create new artwork
   create: (data: CreateArtworkRequest) => 
@@ -105,7 +115,7 @@ export const searchApi = {
     api.get<Artwork[]>(`/artworks/${artworkId}/recommendations`),
 };
 
-// Type definitions (to be expanded based on backend schema)
+// Type definitions matching backend schema
 export interface Artwork {
   id: string;
   title: string;
@@ -117,22 +127,94 @@ export interface Artwork {
   description?: string;
   imageUrl?: string;
   currentLocation?: string;
+  period?: string;
+  style?: string;
   provenance?: ProvenanceRecord[];
   externalLinks?: {
     dbpedia?: string;
     wikidata?: string;
     getty?: string;
   };
+  // JSON-LD fields
+  '@context'?: Record<string, unknown>;
+  '@type'?: string;
 }
 
 export interface ProvenanceRecord {
   id: string;
-  date: string;
+  date?: string;
   event: string;
   owner?: string;
   location?: string;
   description?: string;
   sourceUri?: string;
+  order?: number;
+}
+
+// External enrichment data
+export interface ArtworkEnrichment {
+  artwork_id: string;
+  dbpedia?: DBpediaArtworkInfo;
+  wikidata?: WikidataArtworkInfo;
+  getty?: GettyTerm[];
+  artist_dbpedia?: DBpediaArtistInfo;
+  artist_wikidata?: WikidataArtistInfo;
+  artist_local?: LocalArtistInfo;
+}
+
+export interface DBpediaArtworkInfo {
+  uri: string;
+  label?: string;
+  abstract?: string;
+  thumbnail?: string;
+  museum?: string;
+  movement?: string;
+}
+
+export interface WikidataArtworkInfo {
+  uri: string;
+  label?: string;
+  description?: string;
+  image?: string;
+  inception?: string;
+  genre?: string;
+}
+
+export interface GettyTerm {
+  uri: string;
+  prefLabel?: string;
+  scopeNote?: string;
+  broader?: string;
+}
+
+export interface DBpediaArtistInfo {
+  uri: string;
+  name?: string;
+  abstract?: string;
+  birthDate?: string;
+  deathDate?: string;
+  birthPlace?: string;
+  thumbnail?: string;
+}
+
+export interface WikidataArtistInfo {
+  uri: string;
+  name?: string;
+  description?: string;
+  birthDate?: string;
+  deathDate?: string;
+  nationality?: string;
+  image?: string;
+}
+
+export interface LocalArtistInfo {
+  source: string;
+  uri?: string;
+  name?: string;
+  birthDate?: string;
+  deathDate?: string;
+  nationality?: string;
+  description?: string;
 }
 
 export interface ArtworkListResponse {

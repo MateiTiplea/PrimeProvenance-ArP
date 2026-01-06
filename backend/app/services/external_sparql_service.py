@@ -74,22 +74,25 @@ class ExternalSPARQLService:
         """Initialize external SPARQL service with endpoints and cache."""
         self.cache = SimpleCache(ttl=settings.external_cache_ttl)
 
+        # External query timeout (shorter to prevent blocking the API)
+        external_timeout = 10
+
         # Initialize DBpedia client
         self.dbpedia = SPARQLWrapper(settings.dbpedia_endpoint)
         self.dbpedia.setReturnFormat(JSON)
-        self.dbpedia.setTimeout(30)
+        self.dbpedia.setTimeout(external_timeout)
         self.dbpedia.addCustomHttpHeader("User-Agent", "ArP-Artwork-Provenance/1.0")
 
         # Initialize Wikidata client
         self.wikidata = SPARQLWrapper(settings.wikidata_endpoint)
         self.wikidata.setReturnFormat(JSON)
-        self.wikidata.setTimeout(30)
+        self.wikidata.setTimeout(external_timeout)
         self.wikidata.addCustomHttpHeader("User-Agent", "ArP-Artwork-Provenance/1.0")
 
         # Initialize Getty client
         self.getty = SPARQLWrapper(settings.getty_endpoint)
         self.getty.setReturnFormat(JSON)
-        self.getty.setTimeout(30)
+        self.getty.setTimeout(external_timeout)
         self.getty.addCustomHttpHeader("User-Agent", "ArP-Artwork-Provenance/1.0")
 
     def _execute_query(

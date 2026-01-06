@@ -80,6 +80,17 @@ class GettyTerm(BaseModel):
     error: Optional[str] = None
 
 
+class LocalArtistInfo(BaseModel):
+    """Artist information from local triplestore."""
+    source: str = "local"
+    uri: Optional[str] = None
+    name: Optional[str] = None
+    birthDate: Optional[str] = None
+    deathDate: Optional[str] = None
+    nationality: Optional[str] = None
+    description: Optional[str] = None
+
+
 class ExternalLinks(BaseModel):
     """External links for an artwork or artist."""
     dbpedia: Optional[str] = Field(None, description="DBpedia resource URI")
@@ -95,6 +106,7 @@ class ArtworkEnrichment(BaseModel):
     getty: Optional[List[GettyTerm]] = None
     artist_dbpedia: Optional[DBpediaArtistInfo] = None
     artist_wikidata: Optional[WikidataArtistInfo] = None
+    artist_local: Optional[LocalArtistInfo] = None
     
     class Config:
         json_schema_extra = {

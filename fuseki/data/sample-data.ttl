@@ -1,15 +1,15 @@
-@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix owl:     <http://www.w3.org/2002/07/owl#> .
-@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix prov:    <http://www.w3.org/ns/prov#> .
-@prefix schema:  <http://schema.org/> .
-@prefix aat:     <http://vocab.getty.edu/aat/> .
-@prefix dbr:     <http://dbpedia.org/resource/> .
-@prefix wd:      <http://www.wikidata.org/entity/> .
-@prefix arp:     <http://example.org/arp#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix schema: <http://schema.org/> .
+@prefix aat: <http://vocab.getty.edu/aat/> .
+@prefix dbr: <http://dbpedia.org/resource/> .
+@prefix wd: <http://www.wikidata.org/entity/> .
+@prefix arp: <http://example.org/arp#> .
 
 # =============================================================================
 # SAMPLE DATA - ArP Artwork Provenance
@@ -80,12 +80,87 @@ arp:location_florence a arp:Location ;
 arp:location_amboise a arp:Location ;
     schema:name "Château d'Amboise"@en ;
     schema:address "Amboise, France" ;
-    owl:sameAs dbr:Château_d%27Amboise .
+    owl:sameAs dbr:Château_d%27Amboise, wd:Q237788 .
 
 arp:location_fontainebleau a arp:Location ;
     schema:name "Palace of Fontainebleau"@en ;
     schema:address "Fontainebleau, France" ;
     owl:sameAs dbr:Palace_of_Fontainebleau, wd:Q182811 .
+
+arp:location_saint_remy a arp:Location ;
+    schema:name "Saint-Rémy-de-Provence"@en ;
+    schema:address "Saint-Rémy-de-Provence, Provence-Alpes-Côte d'Azur, France" ;
+    owl:sameAs dbr:Saint-Rémy-de-Provence, wd:Q188571 .
+
+arp:location_mauritshuis a arp:Location, schema:Museum ;
+    schema:name "Mauritshuis"@en ;
+    schema:address "Plein 29, 2511 CS The Hague, Netherlands" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "52.0804"^^xsd:decimal ;
+        schema:longitude "4.3142"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Mauritshuis, wd:Q221092 .
+
+arp:location_rijksmuseum a arp:Location, schema:Museum ;
+    schema:name "Rijksmuseum"@en ;
+    schema:address "Museumstraat 1, 1071 XX Amsterdam, Netherlands" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "52.3600"^^xsd:decimal ;
+        schema:longitude "4.8852"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Rijksmuseum, wd:Q190804 .
+
+arp:location_national_gallery_oslo a arp:Location, schema:Museum ;
+    schema:name "National Gallery of Norway"@en ;
+    schema:address "Brynjulf Bulls plass 3, 0250 Oslo, Norway" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "59.9163"^^xsd:decimal ;
+        schema:longitude "10.7385"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:National_Gallery_of_Norway, wd:Q1967082 .
+
+arp:location_reina_sofia a arp:Location, schema:Museum ;
+    schema:name "Museo Reina Sofía"@en ;
+    schema:address "Calle de Santa Isabel, 52, 28012 Madrid, Spain" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "40.4086"^^xsd:decimal ;
+        schema:longitude "-3.6943"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Museo_Reina_Sofía, wd:Q460889 .
+
+arp:location_belvedere a arp:Location, schema:Museum ;
+    schema:name "Belvedere"@en ;
+    schema:address "Prinz Eugen-Straße 27, 1030 Vienna, Austria" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "48.1914"^^xsd:decimal ;
+        schema:longitude "16.3808"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Belvedere_Vienna, wd:Q303679 .
+
+arp:location_santa_maria_grazie a arp:Location ;
+    schema:name "Santa Maria delle Grazie"@en ;
+    schema:address "Piazza di Santa Maria delle Grazie, 2, 20123 Milan, Italy" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "45.4660"^^xsd:decimal ;
+        schema:longitude "9.1711"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Santa_Maria_delle_Grazie, wd:Q210804 .
+
+arp:location_musee_orangerie a arp:Location, schema:Museum ;
+    schema:name "Musée de l'Orangerie"@en ;
+    schema:address "Jardin Tuileries, 75001 Paris, France" ;
+    schema:geo [
+        a schema:GeoCoordinates ;
+        schema:latitude "48.8638"^^xsd:decimal ;
+        schema:longitude "2.3226"^^xsd:decimal
+    ] ;
+    owl:sameAs dbr:Musée_de_l%27Orangerie, wd:Q461032 .
 
 # =============================================================================
 # ARTISTS
@@ -131,7 +206,87 @@ arp:artist_luchian a arp:Artist ;
     schema:deathDate "1916-06-28"^^xsd:date ;
     schema:nationality "Romanian" ;
     dc:description "Romanian painter, considered one of the leading figures in Romanian modern art."@en ;
-    owl:sameAs <http://dbpedia.org/resource/Ștefan_Luchian>, wd:Q558616 .
+    owl:sameAs dbr:Stefan_Luchian, wd:Q558616 .
+
+arp:artist_vermeer a arp:Artist ;
+    schema:name "Johannes Vermeer"@en ;
+    schema:birthDate "1632-10-31"^^xsd:date ;
+    schema:deathDate "1675-12-15"^^xsd:date ;
+    schema:nationality "Dutch" ;
+    dc:description "Dutch Baroque painter who specialized in domestic interior scenes of middle-class life."@en ;
+    owl:sameAs dbr:Johannes_Vermeer, wd:Q41264 .
+
+arp:artist_rembrandt a arp:Artist ;
+    schema:name "Rembrandt van Rijn"@en ;
+    schema:birthDate "1606-07-15"^^xsd:date ;
+    schema:deathDate "1669-10-04"^^xsd:date ;
+    schema:nationality "Dutch" ;
+    dc:description "Dutch Golden Age painter, generally considered one of the greatest visual artists in the history of art."@en ;
+    owl:sameAs dbr:Rembrandt, wd:Q5598 .
+
+arp:artist_munch a arp:Artist ;
+    schema:name "Edvard Munch"@en ;
+    schema:birthDate "1863-12-12"^^xsd:date ;
+    schema:deathDate "1944-01-23"^^xsd:date ;
+    schema:nationality "Norwegian" ;
+    dc:description "Norwegian painter whose best-known work, The Scream, has become one of the most iconic images in art history."@en ;
+    owl:sameAs dbr:Edvard_Munch, wd:Q41406 .
+
+arp:artist_picasso a arp:Artist ;
+    schema:name "Pablo Picasso"@en ;
+    schema:birthDate "1881-10-25"^^xsd:date ;
+    schema:deathDate "1973-04-08"^^xsd:date ;
+    schema:nationality "Spanish" ;
+    dc:description "Spanish painter, sculptor, printmaker, and co-founder of Cubism."@en ;
+    owl:sameAs dbr:Pablo_Picasso, wd:Q5593 .
+
+arp:artist_klimt a arp:Artist ;
+    schema:name "Gustav Klimt"@en ;
+    schema:birthDate "1862-07-14"^^xsd:date ;
+    schema:deathDate "1918-02-06"^^xsd:date ;
+    schema:nationality "Austrian" ;
+    dc:description "Austrian symbolist painter and one of the most prominent members of the Vienna Secession movement."@en ;
+    owl:sameAs dbr:Gustav_Klimt, wd:Q34661 .
+
+arp:artist_dali a arp:Artist ;
+    schema:name "Salvador Dalí"@en ;
+    schema:birthDate "1904-05-11"^^xsd:date ;
+    schema:deathDate "1989-01-23"^^xsd:date ;
+    schema:nationality "Spanish" ;
+    dc:description "Spanish surrealist artist renowned for his technical skill, striking imagery, and bizarre dreamlike paintings."@en ;
+    owl:sameAs dbr:Salvador_Dalí, wd:Q5577 .
+
+arp:artist_monet a arp:Artist ;
+    schema:name "Claude Monet"@en ;
+    schema:birthDate "1840-11-14"^^xsd:date ;
+    schema:deathDate "1926-12-05"^^xsd:date ;
+    schema:nationality "French" ;
+    dc:description "French painter and founder of French Impressionist painting."@en ;
+    owl:sameAs dbr:Claude_Monet, wd:Q296 .
+
+arp:artist_tonitza a arp:Artist ;
+    schema:name "Nicolae Tonitza"@en ;
+    schema:birthDate "1886-04-13"^^xsd:date ;
+    schema:deathDate "1940-02-26"^^xsd:date ;
+    schema:nationality "Romanian" ;
+    dc:description "Romanian painter, graphic artist, and art critic, known for his distinctive portraits of children."@en ;
+    owl:sameAs dbr:Nicolae_Tonitza, wd:Q561835 .
+
+arp:artist_aman a arp:Artist ;
+    schema:name "Theodor Aman"@en ;
+    schema:birthDate "1831-03-20"^^xsd:date ;
+    schema:deathDate "1891-08-19"^^xsd:date ;
+    schema:nationality "Romanian" ;
+    dc:description "Romanian painter, founder of the National School of Fine Arts in Bucharest."@en ;
+    owl:sameAs dbr:Theodor_Aman, wd:Q561153 .
+
+arp:artist_andreescu a arp:Artist ;
+    schema:name "Ion Andreescu"@en ;
+    schema:birthDate "1850-02-15"^^xsd:date ;
+    schema:deathDate "1882-10-22"^^xsd:date ;
+    schema:nationality "Romanian" ;
+    dc:description "Romanian painter considered one of the founders of modern Romanian painting alongside Nicolae Grigorescu."@en ;
+    owl:sameAs dbr:Ion_Andreescu, wd:Q561199 .
 
 # =============================================================================
 # OWNERS
@@ -153,7 +308,7 @@ arp:owner_french_republic a arp:OrganizationOwner ;
 arp:owner_theo_vangogh a arp:PersonOwner ;
     schema:name "Theo van Gogh"@en ;
     dc:description "Dutch art dealer and younger brother of Vincent van Gogh."@en ;
-    owl:sameAs <http://dbpedia.org/resource/Theo_van_Gogh_(art_dealer)>, wd:Q317188 .
+    owl:sameAs dbr:Theo_van_Gogh, wd:Q317188 .
 
 arp:owner_johanna_vangogh a arp:PersonOwner ;
     schema:name "Johanna van Gogh-Bonger"@en ;
@@ -196,6 +351,27 @@ arp:owner_moma a arp:OrganizationOwner ;
     arp:ownerLocation arp:location_moma ;
     owl:sameAs dbr:Museum_of_Modern_Art, wd:Q188740 .
 
+arp:owner_dutch_state a arp:OrganizationOwner ;
+    schema:name "Dutch State"@en ;
+    dc:description "The Kingdom of the Netherlands as custodian of national cultural heritage."@en .
+
+arp:owner_norwegian_state a arp:OrganizationOwner ;
+    schema:name "Norwegian State"@en ;
+    dc:description "The Kingdom of Norway as custodian of national cultural heritage."@en .
+
+arp:owner_spanish_state a arp:OrganizationOwner ;
+    schema:name "Spanish State"@en ;
+    dc:description "The Kingdom of Spain as custodian of national cultural heritage."@en .
+
+arp:owner_austrian_state a arp:OrganizationOwner ;
+    schema:name "Austrian State"@en ;
+    dc:description "The Republic of Austria as custodian of national cultural heritage."@en .
+
+arp:owner_dominican_order a arp:OrganizationOwner ;
+    schema:name "Dominican Order"@en ;
+    dc:description "Catholic religious order that commissioned The Last Supper."@en ;
+    owl:sameAs dbr:Dominican_Order, wd:Q134747 .
+
 # =============================================================================
 # ARTWORK 1: Mona Lisa
 # =============================================================================
@@ -211,8 +387,8 @@ arp:artwork_mona_lisa a arp:Artwork, schema:VisualArtwork, schema:Painting ;
     arp:artworkDimensions "77 cm × 53 cm (30 in × 21 in)" ;
     arp:artworkPeriod "High Renaissance" ;
     arp:artworkStyle "Renaissance" ;
-    schema:image <https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg> ;
-    schema:artMedium aat:300015050 ;  # Oil paint
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Mona_Lisa,_by_Leonardo_da_Vinci,_from_C2RMF_retouched.jpg> ;
+    schema:artMedium aat:300015050 ;
     arp:currentOwner arp:owner_french_republic ;
     arp:currentLocation arp:location_louvre ;
     owl:sameAs dbr:Mona_Lisa, wd:Q12418 ;
@@ -262,7 +438,7 @@ arp:prov_mona_lisa_004 a arp:ProvenanceEvent ;
 
 arp:artwork_starry_night a arp:Artwork, schema:VisualArtwork, schema:Painting ;
     dc:title "The Starry Night"@en ;
-    dc:title "De sterrennacht"@nl ;
+    dc:title "De sterrennacht"@nl ; 
     dc:creator arp:artist_vangogh ;
     dcterms:created "1889-06"^^xsd:gYearMonth ;
     dc:description "An oil-on-canvas painting depicting a swirling night sky over a village, painted during Van Gogh's stay at the Saint-Paul-de-Mausole asylum."@en ;
@@ -270,8 +446,8 @@ arp:artwork_starry_night a arp:Artwork, schema:VisualArtwork, schema:Painting ;
     arp:artworkDimensions "73.7 cm × 92.1 cm (29 in × 36¼ in)" ;
     arp:artworkPeriod "Post-Impressionism" ;
     arp:artworkStyle "Post-Impressionism" ;
-    schema:image <https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg> ;
-    schema:artMedium aat:300015050 ;  # Oil paint
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg> ;
+    schema:artMedium aat:300015050 ;
     arp:currentOwner arp:owner_moma ;
     arp:currentLocation arp:location_moma ;
     owl:sameAs dbr:The_Starry_Night, wd:Q45585 ;
@@ -283,6 +459,7 @@ arp:prov_starry_night_001 a arp:ProvenanceEvent ;
     dc:description "Vincent van Gogh painted The Starry Night while staying at the Saint-Paul-de-Mausole asylum in Saint-Rémy-de-Provence."@en ;
     prov:startedAtTime "1889-06-01"^^xsd:date ;
     arp:toOwner arp:artist_vangogh ;
+    arp:eventLocation arp:location_saint_remy ;
     arp:provenanceOrder 1 .
 
 arp:prov_starry_night_002 a arp:ProvenanceEvent ;
@@ -326,8 +503,8 @@ arp:artwork_birth_of_venus a arp:Artwork, schema:VisualArtwork, schema:Painting 
     arp:artworkDimensions "172.5 cm × 278.9 cm (67.9 in × 109.6 in)" ;
     arp:artworkPeriod "Early Renaissance" ;
     arp:artworkStyle "Renaissance" ;
-    schema:image <https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/1280px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg> ;
-    schema:artMedium aat:300015062 ;  # Tempera
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg> ;
+    schema:artMedium aat:300015062 ;
     arp:currentOwner arp:owner_italian_state ;
     arp:currentLocation arp:location_uffizi ;
     owl:sameAs dbr:The_Birth_of_Venus, wd:Q81689 ;
@@ -376,6 +553,7 @@ arp:artwork_car_cu_boi a arp:Artwork, schema:VisualArtwork, schema:Painting ;
     arp:artworkStyle "Impressionism, Realism" ;
     arp:currentOwner arp:owner_romanian_state ;
     arp:currentLocation arp:location_mnac ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Nicolae_Grigorescu_-_Car_cu_boi.jpg> ;
     owl:sameAs wd:Q12726936 ;
     arp:hasProvenanceEvent arp:prov_car_001, arp:prov_car_002 .
 
@@ -402,6 +580,7 @@ arp:prov_car_002 a arp:ProvenanceEvent ;
 
 arp:artwork_anemone a arp:Artwork, schema:VisualArtwork, schema:Painting ;
     dc:title "Anemone"@en ;
+    dc:title "Anemone"@ro ;
     dc:creator arp:artist_luchian ;
     dcterms:created "1908"^^xsd:gYear ;
     dc:description "One of Ștefan Luchian's famous flower paintings, showcasing his distinctive style despite being affected by multiple sclerosis."@en ;
@@ -409,8 +588,11 @@ arp:artwork_anemone a arp:Artwork, schema:VisualArtwork, schema:Painting ;
     arp:artworkDimensions "44 cm × 34 cm" ;
     arp:artworkPeriod "Romanian Post-Impressionism" ;
     arp:artworkStyle "Post-Impressionism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Stefan_Luchian_-_Anemone.jpg> ;
+    schema:artMedium aat:300015050 ;
     arp:currentOwner arp:owner_romanian_state ;
     arp:currentLocation arp:location_mnac ;
+    owl:sameAs wd:Q97304909 ;
     arp:hasProvenanceEvent arp:prov_anemone_001, arp:prov_anemone_002, arp:prov_anemone_003 .
 
 # Provenance Events for Anemone
@@ -438,3 +620,385 @@ arp:prov_anemone_003 a arp:ProvenanceEvent ;
     arp:eventLocation arp:location_mnac ;
     arp:provenanceOrder 3 .
 
+# =============================================================================
+# ARTWORK 6: Girl with a Pearl Earring
+# =============================================================================
+
+arp:artwork_girl_pearl_earring a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Girl with a Pearl Earring"@en ;
+    dc:title "Meisje met de parel"@nl ;
+    dc:creator arp:artist_vermeer ;
+    dcterms:created "1665"^^xsd:gYear ;
+    dc:description "An oil painting by Dutch Golden Age painter Johannes Vermeer, depicting a girl wearing an exotic dress and a large pearl earring."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "44.5 cm × 39 cm (17.5 in × 15 in)" ;
+    arp:artworkPeriod "Dutch Golden Age" ;
+    arp:artworkStyle "Baroque, Tronie" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Johannes_Vermeer_-_Girl_with_a_Pearl_Earring_(Mauritshuis).jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_dutch_state ;
+    arp:currentLocation arp:location_mauritshuis ;
+    owl:sameAs dbr:Girl_with_a_Pearl_Earring, wd:Q161764 ;
+    arp:hasProvenanceEvent arp:prov_girl_pearl_001, arp:prov_girl_pearl_002 .
+
+arp:prov_girl_pearl_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Johannes Vermeer painted this work, likely as a 'tronie' (study of a head)."@en ;
+    prov:startedAtTime "1665-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_vermeer ;
+    arp:provenanceOrder 1 .
+
+arp:prov_girl_pearl_002 a arp:ProvenanceEvent ;
+    arp:eventType "Acquisition" ;
+    dc:description "Acquired by the Mauritshuis museum in The Hague."@en ;
+    prov:startedAtTime "1902-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_private_collectors ;
+    arp:toOwner arp:owner_dutch_state ;
+    arp:eventLocation arp:location_mauritshuis ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 7: The Night Watch
+# =============================================================================
+
+arp:artwork_night_watch a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "The Night Watch"@en ;
+    dc:title "De Nachtwacht"@nl ;
+    dc:creator arp:artist_rembrandt ;
+    dcterms:created "1642"^^xsd:gYear ;
+    dc:description "A group portrait of a militia company by Rembrandt, one of the most famous Dutch Golden Age paintings."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "363 cm × 437 cm (142.9 in × 172.0 in)" ;
+    arp:artworkPeriod "Dutch Golden Age" ;
+    arp:artworkStyle "Baroque" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/The_Night_Watch_-_HD.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_dutch_state ;
+    arp:currentLocation arp:location_rijksmuseum ;
+    owl:sameAs dbr:The_Night_Watch, wd:Q219831 ;
+    arp:hasProvenanceEvent arp:prov_night_watch_001, arp:prov_night_watch_002 .
+
+arp:prov_night_watch_001 a arp:ProvenanceEvent ;
+    arp:eventType "Commission" ;
+    dc:description "Commissioned by Captain Frans Banning Cocq for the Kloveniersdoelen (civic militia headquarters)."@en ;
+    prov:startedAtTime "1642-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_rembrandt ;
+    arp:provenanceOrder 1 .
+
+arp:prov_night_watch_002 a arp:ProvenanceEvent ;
+    arp:eventType "Transfer" ;
+    dc:description "Moved to the Rijksmuseum where it has been on display since 1885."@en ;
+    prov:startedAtTime "1885-01-01"^^xsd:date ;
+    arp:toOwner arp:owner_dutch_state ;
+    arp:eventLocation arp:location_rijksmuseum ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 8: The Scream
+# =============================================================================
+
+arp:artwork_the_scream a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "The Scream"@en ;
+    dc:title "Skrik"@no ;
+    dc:creator arp:artist_munch ;
+    dcterms:created "1893"^^xsd:gYear ;
+    dc:description "An expressionist painting showing a figure with an agonized face against a tumultuous sky, representing the anxiety of modern life."@en ;
+    arp:artworkMedium "Oil, tempera and pastel on cardboard" ;
+    arp:artworkDimensions "91 cm × 73.5 cm (36 in × 28.9 in)" ;
+    arp:artworkPeriod "Expressionism" ;
+    arp:artworkStyle "Expressionism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Edvard_Munch_-_The_Scream_-_Google_Art_Project.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_norwegian_state ;
+    arp:currentLocation arp:location_national_gallery_oslo ;
+    owl:sameAs dbr:The_Scream, wd:Q471379 ;
+    arp:hasProvenanceEvent arp:prov_scream_001, arp:prov_scream_002 .
+
+arp:prov_scream_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Edvard Munch created this work as part of his series 'The Frieze of Life'."@en ;
+    prov:startedAtTime "1893-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_munch ;
+    arp:provenanceOrder 1 .
+
+arp:prov_scream_002 a arp:ProvenanceEvent ;
+    arp:eventType "Donation" ;
+    dc:description "Munch bequeathed his remaining works to the city of Oslo upon his death."@en ;
+    prov:startedAtTime "1944-01-23"^^xsd:date ;
+    arp:fromOwner arp:artist_munch ;
+    arp:toOwner arp:owner_norwegian_state ;
+    arp:eventLocation arp:location_national_gallery_oslo ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 9: Guernica
+# =============================================================================
+
+arp:artwork_guernica a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Guernica"@en ;
+    dc:title "Guernica"@es ;
+    dc:creator arp:artist_picasso ;
+    dcterms:created "1937"^^xsd:gYear ;
+    dc:description "A powerful mural-sized oil painting on canvas showing the brutal realities of war, created by Pablo Picasso as a protest against the Bombing of Guernica during the Spanish Civil War."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "349 cm × 776 cm (137.4 in × 305.5 in)" ;
+    arp:artworkPeriod "Modernism" ;
+    arp:artworkStyle "Cubism" ;
+    schema:image <https://en.wikipedia.org/wiki/Special:FilePath/PicassoGuernica.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_spanish_state ;
+    arp:currentLocation arp:location_reina_sofia ;
+    owl:sameAs dbr:Guernica, wd:Q204857 ;
+    arp:hasProvenanceEvent arp:prov_guernica_001, arp:prov_guernica_002, arp:prov_guernica_003 .
+
+arp:prov_guernica_001 a arp:ProvenanceEvent ;
+    arp:eventType "Commission" ;
+    dc:description "Commissioned by the Spanish Republican government for the Spanish Pavilion at the 1937 Paris International Exposition."@en ;
+    prov:startedAtTime "1937-01-01"^^xsd:date ;
+    prov:endedAtTime "1937-06-04"^^xsd:date ;
+    arp:toOwner arp:artist_picasso ;
+    arp:eventLocation <http://dbpedia.org/resource/Paris> ;
+    arp:provenanceOrder 1 .
+
+arp:prov_guernica_002 a arp:ProvenanceEvent ;
+    arp:eventType "Exile" ;
+    dc:description "Following the Spanish Civil War, the painting was kept outside Spain for many decades during Franco's regime, residing in MoMA's collection."@en ;
+    prov:startedAtTime "1939-01-01"^^xsd:date ;
+    prov:endedAtTime "1981-01-01"^^xsd:date ;
+    arp:fromOwner arp:artist_picasso ;
+    arp:toOwner arp:owner_moma ;
+    arp:eventLocation arp:location_moma ;
+    arp:provenanceOrder 2 .
+
+arp:prov_guernica_003 a arp:ProvenanceEvent ;
+    arp:eventType "Repatriation" ;
+    dc:description "Returned to Spain and installed in the Museo Reina Sofía in Madrid following Franco's death."@en ;
+    prov:startedAtTime "1981-09-10"^^xsd:date ;
+    arp:fromOwner arp:owner_moma ;
+    arp:toOwner arp:owner_spanish_state ;
+    arp:eventLocation arp:location_reina_sofia ;
+    arp:provenanceOrder 3 .
+
+# =============================================================================
+# ARTWORK 10: Water Lilies
+# =============================================================================
+
+arp:artwork_water_lilies a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Water Lilies"@en ;
+    dc:title "Nymphéas"@fr ;
+    dc:creator arp:artist_monet ;
+    dcterms:created "1920"^^xsd:gYear ;
+    arp:creationEndDate "1926"^^xsd:gYear ;
+    dc:description "One of the monumental water lilies murals from Claude Monet's final series, displayed in the Musée de l'Orangerie."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "200 cm × 1275 cm (78.7 in × 502 in)" ;
+    arp:artworkPeriod "Impressionism" ;
+    arp:artworkStyle "Impressionism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Claude_Monet_-_Water_Lilies_-_1906,_Ryerson.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_french_republic ;
+    arp:currentLocation arp:location_musee_orangerie ;
+    owl:sameAs dbr:Water_Lilies, wd:Q155821 ;
+    arp:hasProvenanceEvent arp:prov_water_lilies_001, arp:prov_water_lilies_002 .
+
+arp:prov_water_lilies_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Claude Monet created this work as part of his final monumental water lilies series at Giverny."@en ;
+    prov:startedAtTime "1920-01-01"^^xsd:date ;
+    prov:endedAtTime "1926-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_monet ;
+    arp:provenanceOrder 1 .
+
+arp:prov_water_lilies_002 a arp:ProvenanceEvent ;
+    arp:eventType "Donation" ;
+    dc:description "Donated by Monet to the French state, displayed in specially designed oval rooms in the Orangerie."@en ;
+    prov:startedAtTime "1927-05-17"^^xsd:date ;
+    arp:fromOwner arp:artist_monet ;
+    arp:toOwner arp:owner_french_republic ;
+    arp:eventLocation arp:location_musee_orangerie ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 11: The Kiss (Der Kuss)
+# =============================================================================
+
+arp:artwork_the_kiss a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "The Kiss"@en ;
+    dc:title "Der Kuss"@de ;
+    dc:creator arp:artist_klimt ;
+    dcterms:created "1908"^^xsd:gYear ;
+    dc:description "A golden-hued painting depicting a couple embracing, created by Gustav Klimt during the height of the Vienna Secession movement."@en ;
+    arp:artworkMedium "Oil and gold leaf on canvas" ;
+    arp:artworkDimensions "180 cm × 180 cm (71 in × 71 in)" ;
+    arp:artworkPeriod "Art Nouveau" ;
+    arp:artworkStyle "Vienna Secession, Symbolism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_austrian_state ;
+    arp:currentLocation arp:location_belvedere ;
+    owl:sameAs dbr:The_Kiss, wd:Q39629 ;
+    arp:hasProvenanceEvent arp:prov_kiss_001, arp:prov_kiss_002 .
+
+arp:prov_kiss_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Gustav Klimt created this iconic work in Vienna during his most productive period."@en ;
+    prov:startedAtTime "1908-01-01"^^xsd:date ;
+    prov:endedAtTime "1909-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_klimt ;
+    arp:provenanceOrder 1 .
+
+arp:prov_kiss_002 a arp:ProvenanceEvent ;
+    arp:eventType "Collection" ;
+    dc:description "Acquired for the Belvedere collection and remains one of the most valued treasures of Austrian cultural heritage."@en ;
+    prov:startedAtTime "1910-01-01"^^xsd:date ;
+    arp:toOwner arp:owner_austrian_state ;
+    arp:eventLocation arp:location_belvedere ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 12: Safta Florăreasa (The Flower Seller) - Romanian Heritage
+# =============================================================================
+
+arp:artwork_safta_florareasa a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Safta Florăreasa"@ro ;
+    dc:title "The Flower Seller"@en ;
+    dc:creator arp:artist_luchian ;
+    dcterms:created "1901"^^xsd:gYear ;
+    dc:description "An iconic portrait of a Bucharest flower seller by Ștefan Luchian, considered a masterpiece of Romanian painting."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "80.5 cm × 62 cm" ;
+    arp:artworkPeriod "Romanian Post-Impressionism" ;
+    arp:artworkStyle "Post-Impressionism, Realism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Stefan_Luchian_-_Safta_florareasa.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_romanian_state ;
+    arp:currentLocation arp:location_mnac ;
+    owl:sameAs wd:Q18576091 ;
+    arp:hasProvenanceEvent arp:prov_safta_001, arp:prov_safta_002 .
+
+arp:prov_safta_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Ștefan Luchian painted this portrait of a well-known Bucharest flower seller named Safta."@en ;
+    prov:startedAtTime "1901-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_luchian ;
+    arp:provenanceOrder 1 .
+
+arp:prov_safta_002 a arp:ProvenanceEvent ;
+    arp:eventType "National Acquisition" ;
+    dc:description "Acquired for the national collection at the National Museum of Art of Romania."@en ;
+    prov:startedAtTime "1950-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_romanian_private_collectors ;
+    arp:toOwner arp:owner_romanian_state ;
+    arp:eventLocation arp:location_mnac ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 13: Rodica - Romanian Heritage
+# =============================================================================
+
+arp:artwork_rodica a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Rodica"@ro ;
+    dc:title "Rodica"@en ;
+    dc:creator arp:artist_tonitza ;
+    dcterms:created "1924"^^xsd:gYear ;
+    dc:description "A portrait of a girl named Rodica, exemplifying Nicolae Tonitza's distinctive style of painting children."@en ;
+    arp:artworkMedium "Oil on cardboard" ;
+    arp:artworkDimensions "50.5 cm × 41 cm" ;
+    arp:artworkPeriod "Romanian Expressionism" ;
+    arp:artworkStyle "Expressionism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Nicolae_Tonitza_-_Rodica.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_romanian_state ;
+    arp:currentLocation arp:location_mnac ;
+    owl:sameAs wd:Q50378974 ;
+    arp:hasProvenanceEvent arp:prov_rodica_001, arp:prov_rodica_002 .
+
+arp:prov_rodica_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Nicolae Tonitza painted this characteristic portrait during his prolific period."@en ;
+    prov:startedAtTime "1924-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_tonitza ;
+    arp:provenanceOrder 1 .
+
+arp:prov_rodica_002 a arp:ProvenanceEvent ;
+    arp:eventType "National Acquisition" ;
+    dc:description "Acquired for the National Museum of Art of Romania."@en ;
+    prov:startedAtTime "1950-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_romanian_private_collectors ;
+    arp:toOwner arp:owner_romanian_state ;
+    arp:eventLocation arp:location_mnac ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 14: Iarna la Barbizon (Winter at Barbizon) - Romanian Heritage
+# =============================================================================
+
+arp:artwork_iarna_barbizon a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Iarna la Barbizon"@ro ;
+    dc:title "Winter at Barbizon"@en ;
+    dc:creator arp:artist_grigorescu ;
+    dcterms:created "1875"^^xsd:gYear ;
+    dc:description "A winter landscape painted by Nicolae Grigorescu during his time at the Barbizon school in France."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "45 cm × 65 cm" ;
+    arp:artworkPeriod "Romanian Impressionism" ;
+    arp:artworkStyle "Impressionism, Barbizon School" ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_romanian_state ;
+    arp:currentLocation arp:location_mnac ;
+    owl:sameAs wd:Q20856523 ;
+    arp:hasProvenanceEvent arp:prov_iarna_001, arp:prov_iarna_002 .
+
+arp:prov_iarna_001 a arp:ProvenanceEvent ;
+    arp:eventType "Creation" ;
+    dc:description "Nicolae Grigorescu painted this during his formative years with the Barbizon school painters in France."@en ;
+    prov:startedAtTime "1875-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_grigorescu ;
+    arp:provenanceOrder 1 .
+
+arp:prov_iarna_002 a arp:ProvenanceEvent ;
+    arp:eventType "National Acquisition" ;
+    dc:description "Acquired for the National Museum of Art of Romania collection."@en ;
+    prov:startedAtTime "1950-01-01"^^xsd:date ;
+    arp:fromOwner arp:owner_romanian_private_collectors ;
+    arp:toOwner arp:owner_romanian_state ;
+    arp:eventLocation arp:location_mnac ;
+    arp:provenanceOrder 2 .
+
+# =============================================================================
+# ARTWORK 15: Bătălia de la Oltenita (Battle of Oltenita) - Romanian Heritage
+# =============================================================================
+
+arp:artwork_battle_oltenita a arp:Artwork, schema:VisualArtwork, schema:Painting ;
+    dc:title "Bătălia de la Oltenita"@ro ;
+    dc:title "Battle of Oltenita"@en ;
+    dc:creator arp:artist_aman ;
+    dcterms:created "1873"^^xsd:gYear ;
+    dc:description "A historical painting depicting the Battle of Oltenita (1853), part of the Crimean War, showcasing Theodor Aman's skill in historical scene composition."@en ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkDimensions "197 cm × 279 cm" ;
+    arp:artworkPeriod "Romanian Romanticism" ;
+    arp:artworkStyle "Romanticism, Realism" ;
+    schema:image <https://commons.wikimedia.org/wiki/Special:FilePath/Theodor_Aman_-_Battle_of_Oltenita.jpg> ;
+    schema:artMedium aat:300015050 ;
+    arp:currentOwner arp:owner_romanian_state ;
+    arp:currentLocation arp:location_mnac ;
+    owl:sameAs wd:Q19636451 ;
+    arp:hasProvenanceEvent arp:prov_battle_001, arp:prov_battle_002 .
+
+arp:prov_battle_001 a arp:ProvenanceEvent ;
+    arp:eventType "Commission" ;
+    dc:description "Commissioned to commemorate the Romanian participation in the Russo-Turkish conflict."@en ;
+    prov:startedAtTime "1873-01-01"^^xsd:date ;
+    arp:toOwner arp:artist_aman ;
+    arp:provenanceOrder 1 .
+
+arp:prov_battle_002 a arp:ProvenanceEvent ;
+    arp:eventType "National Collection" ;
+    dc:description "Part of the National Museum of Art of Romania's collection commemorating Romanian military history."@en ;
+    prov:startedAtTime "1950-01-01"^^xsd:date ;
+    arp:toOwner arp:owner_romanian_state ;
+    arp:eventLocation arp:location_mnac ;
+    arp:provenanceOrder 2 .
+
+# END OF FILE

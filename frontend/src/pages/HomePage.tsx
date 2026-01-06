@@ -1,6 +1,28 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { artworkApi, type Artwork } from '../services/api';
+import { ArtworkCard, ArtworkCardSkeleton } from '../components';
 
 const HomePage = () => {
+  const [featuredArtworks, setFeaturedArtworks] = useState<Artwork[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedArtworks = async () => {
+      try {
+        const response = await artworkApi.getAll({ limit: 6 });
+        // Backend now properly deduplicates by preferring English titles
+        setFeaturedArtworks(response.data.items);
+      } catch (err) {
+        console.error('Failed to fetch featured artworks:', err);
+      } finally {
+        setLoadingFeatured(false);
+      }
+    };
+
+    fetchFeaturedArtworks();
+  }, []);
+
   return (
     <div className="relative">
       {/* Hero Section */}
@@ -51,8 +73,68 @@ const HomePage = () => {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-parchment to-transparent" />
       </section>
 
+      {/* Featured Artworks Section */}
+      <section className="bg-parchment py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-heading text-3xl font-bold text-charcoal">
+                Featured Artworks
+              </h2>
+              <p className="mt-2 text-charcoal-light">
+                Discover masterpieces with rich provenance histories
+              </p>
+            </div>
+            <Link
+              to="/artworks"
+              className="hidden sm:inline-flex items-center gap-2 text-gold hover:text-gold-dark transition-colors"
+            >
+              View all
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Featured Grid */}
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {loadingFeatured ? (
+              <>
+                <ArtworkCardSkeleton />
+                <ArtworkCardSkeleton />
+                <ArtworkCardSkeleton />
+                <ArtworkCardSkeleton />
+                <ArtworkCardSkeleton />
+                <ArtworkCardSkeleton />
+              </>
+            ) : featuredArtworks.length > 0 ? (
+              featuredArtworks.slice(0, 6).map((artwork) => (
+                <ArtworkCard key={artwork.id} artwork={artwork} />
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center">
+                <p className="text-charcoal-light">No artworks available yet.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile view all link */}
+          <div className="mt-8 text-center sm:hidden">
+            <Link
+              to="/artworks"
+              className="inline-flex items-center gap-2 text-gold hover:text-gold-dark transition-colors"
+            >
+              View all artworks
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
-      <section className="bg-parchment py-20">
+      <section className="bg-ivory py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="font-heading text-3xl font-bold text-charcoal sm:text-4xl">
@@ -65,7 +147,7 @@ const HomePage = () => {
 
           <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Feature 1 */}
-            <div className="group rounded-2xl border border-bronze/20 bg-ivory p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
+            <div className="group rounded-2xl border border-bronze/20 bg-parchment p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-burgundy to-burgundy-dark text-ivory">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -80,7 +162,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="group rounded-2xl border border-bronze/20 bg-ivory p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
+            <div className="group rounded-2xl border border-bronze/20 bg-parchment p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-gold-dark text-charcoal">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -95,7 +177,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="group rounded-2xl border border-bronze/20 bg-ivory p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
+            <div className="group rounded-2xl border border-bronze/20 bg-parchment p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-bronze to-bronze-light text-ivory">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -110,7 +192,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 4 */}
-            <div className="group rounded-2xl border border-bronze/20 bg-ivory p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
+            <div className="group rounded-2xl border border-bronze/20 bg-parchment p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-charcoal to-charcoal-light text-gold">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
@@ -125,7 +207,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 5 */}
-            <div className="group rounded-2xl border border-bronze/20 bg-ivory p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
+            <div className="group rounded-2xl border border-bronze/20 bg-parchment p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-burgundy to-burgundy-dark text-ivory">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -140,7 +222,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 6 */}
-            <div className="group rounded-2xl border border-bronze/20 bg-ivory p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
+            <div className="group rounded-2xl border border-bronze/20 bg-parchment p-8 shadow-sm transition-all hover:border-gold/40 hover:shadow-md">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-gold-dark text-charcoal">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -158,7 +240,7 @@ const HomePage = () => {
       </section>
 
       {/* Data Sources Section */}
-      <section className="border-t border-bronze/20 bg-ivory py-16">
+      <section className="border-t border-bronze/20 bg-parchment py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h3 className="text-center font-heading text-lg font-medium text-charcoal-light">
             Integrated Knowledge Sources
@@ -187,4 +269,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
