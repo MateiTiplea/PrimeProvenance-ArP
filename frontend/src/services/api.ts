@@ -1,15 +1,20 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from "axios";
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
@@ -34,13 +39,13 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response) {
       // Server responded with error status
-      console.error('API Error:', error.response.status, error.response.data);
+      console.error("API Error:", error.response.status, error.response.data);
     } else if (error.request) {
       // Request was made but no response received
-      console.error('Network Error:', error.message);
+      console.error("Network Error:", error.message);
     } else {
       // Error in request setup
-      console.error('Request Error:', error.message);
+      console.error("Request Error:", error.message);
     }
     return Promise.reject(error);
   }
@@ -48,70 +53,83 @@ apiClient.interceptors.response.use(
 
 // Generic API methods
 export const api = {
-  get: <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    apiClient.get<T>(url, config),
-  
-  post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    apiClient.post<T>(url, data, config),
-  
-  put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    apiClient.put<T>(url, data, config),
-  
-  patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    apiClient.patch<T>(url, data, config),
-  
-  delete: <T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => 
-    apiClient.delete<T>(url, config),
+  get: <T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> => apiClient.get<T>(url, config),
+
+  post: <T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> => apiClient.post<T>(url, data, config),
+
+  put: <T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> => apiClient.put<T>(url, data, config),
+
+  patch: <T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> => apiClient.patch<T>(url, data, config),
+
+  delete: <T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> => apiClient.delete<T>(url, config),
 };
 
 // Artwork-specific API endpoints
 export const artworkApi = {
   // Get all artworks with optional pagination and filtering
-  getAll: (params?: { 
-    page?: number; 
-    limit?: number; 
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
     search?: string;
     artist?: string;
     period?: string;
-  }) => 
-    api.get<ArtworkListResponse>('/artworks', { params }),
-  
+  }) => api.get<ArtworkListResponse>("/artworks", { params }),
+
   // Get single artwork by ID
-  getById: (id: string) => 
-    api.get<Artwork>(`/artworks/${id}`),
-  
+  getById: (id: string) => api.get<Artwork>(`/artworks/${id}`),
+
   // Get artwork provenance history
-  getProvenance: (id: string) => 
+  getProvenance: (id: string) =>
     api.get<ProvenanceRecord[]>(`/artworks/${id}/provenance`),
-  
+
   // Get enrichment data from external sources
-  getEnrichment: (id: string) => 
+  getEnrichment: (id: string) =>
     api.get<ArtworkEnrichment>(`/artworks/${id}/enrich`),
-  
+
   // Create new artwork
-  create: (data: CreateArtworkRequest) => 
-    api.post<Artwork>('/artworks', data),
-  
+  create: (data: CreateArtworkRequest) => api.post<Artwork>("/artworks", data),
+
   // Get QR code for artwork
-  getQRCode: (id: string) => 
-    api.get<Blob>(`/artworks/${id}/qr`, { responseType: 'blob' }),
+  getQRCode: (id: string) =>
+    api.get<Blob>(`/artworks/${id}/qr`, { responseType: "blob" }),
 };
 
 // SPARQL API endpoints
 export const sparqlApi = {
   // Execute a SPARQL query
-  query: (sparqlQuery: string) => 
-    api.post<SPARQLResponse>('/sparql', { query: sparqlQuery }),
+  query: (sparqlQuery: string) =>
+    api.post<SPARQLQueryResponse>("/sparql/query", { query: sparqlQuery }),
+
+  // Check Fuseki connection status
+  checkStatus: () => api.get<{ connected: boolean }>("/sparql/status"),
 };
 
 // Search API endpoints
 export const searchApi = {
   // Search artworks
-  search: (query: string, filters?: SearchFilters) => 
-    api.get<SearchResponse>('/search', { params: { q: query, ...filters } }),
-  
+  search: (query: string, filters?: SearchFilters) =>
+    api.get<SearchResponse>("/search", { params: { q: query, ...filters } }),
+
   // Get recommendations for an artwork
-  getRecommendations: (artworkId: string) => 
+  getRecommendations: (artworkId: string) =>
     api.get<Artwork[]>(`/artworks/${artworkId}/recommendations`),
 };
 
@@ -136,8 +154,8 @@ export interface Artwork {
     getty?: string;
   };
   // JSON-LD fields
-  '@context'?: Record<string, unknown>;
-  '@type'?: string;
+  "@context"?: Record<string, unknown>;
+  "@type"?: string;
 }
 
 export interface ProvenanceRecord {
@@ -240,6 +258,13 @@ export interface SPARQLResponse {
   };
 }
 
+// Wrapper response from backend SPARQL endpoint
+export interface SPARQLQueryResponse {
+  success: boolean;
+  results?: SPARQLResponse;
+  error?: string;
+}
+
 export interface SearchFilters {
   artist?: string;
   period?: string;
@@ -258,4 +283,3 @@ export interface SearchResponse {
 }
 
 export default apiClient;
-
