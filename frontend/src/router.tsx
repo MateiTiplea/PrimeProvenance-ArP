@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from './layouts/RootLayout';
 import HomePage from './pages/HomePage';
-import ArtworksPage from './pages/ArtworksPage';
+// import ArtworksPage from './pages/ArtworksPage'; // Deprecated
 import ArtworkDetailPage from './pages/ArtworkDetailPage';
 import SPARQLPage from './pages/SPARQLPage';
 import SearchPage from './pages/SearchPage';
@@ -18,7 +18,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'artworks',
-        element: <ArtworksPage />,
+        element: <SearchPage />, // Replaced ArtworksPage with SearchPage
       },
       {
         path: 'artworks/:id',

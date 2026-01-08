@@ -6,7 +6,7 @@ const imageCache = new Set<string>();
 // Transform Wikimedia Commons URLs to use thumbnails
 const getOptimizedUrl = (url: string, width: number = 400): string => {
   if (!url) return '';
-  
+
   // Handle Wikimedia Commons Special:FilePath URLs
   if (url.includes('commons.wikimedia.org/wiki/Special:FilePath/')) {
     const filename = url.split('Special:FilePath/')[1];
@@ -15,7 +15,7 @@ const getOptimizedUrl = (url: string, width: number = 400): string => {
       return `https://commons.wikimedia.org/wiki/Special:FilePath/${filename}?width=${width}`;
     }
   }
-  
+
   // Handle direct Wikimedia Commons URLs
   if (url.includes('upload.wikimedia.org/wikipedia/commons/') && !url.includes('/thumb/')) {
     // Convert to thumbnail URL
@@ -25,7 +25,7 @@ const getOptimizedUrl = (url: string, width: number = 400): string => {
       return `https://upload.wikimedia.org/wikipedia/commons/thumb/${a}/${ab}/${filename}/${width}px-${filename}`;
     }
   }
-  
+
   return url;
 };
 
@@ -38,16 +38,18 @@ interface OptimizedImageProps {
   property?: string;
   /** If true, wrapper shrinks to fit image after loading. If false, keeps placeholder dimensions. */
   shrinkOnLoad?: boolean;
+  loading?: 'lazy' | 'eager';
 }
 
-const OptimizedImage = memo(({ 
-  src, 
-  alt, 
-  className = '', 
+const OptimizedImage = memo(({
+  src,
+  alt,
+  className = '',
   placeholderClassName = '',
   width = 400,
   property,
-  shrinkOnLoad = false
+  shrinkOnLoad = false,
+  loading = 'lazy'
 }: OptimizedImageProps) => {
   const optimizedSrc = src ? getOptimizedUrl(src, width) : '';
   const [isLoaded, setIsLoaded] = useState(() => imageCache.has(optimizedSrc));
@@ -91,8 +93,8 @@ const OptimizedImage = memo(({
 
   // If shrinkOnLoad is true, remove placeholder sizing after image loads
   // Otherwise, keep the placeholder class to maintain container sizing (for grid cards)
-  const wrapperClass = (shrinkOnLoad && isLoaded) 
-    ? 'relative' 
+  const wrapperClass = (shrinkOnLoad && isLoaded)
+    ? 'relative'
     : `relative ${placeholderClassName}`;
 
   return (
@@ -108,7 +110,7 @@ const OptimizedImage = memo(({
       <img
         src={imageSrc}
         alt={alt}
-        loading="lazy"
+        loading={loading}
         decoding="async"
         className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         onLoad={handleLoad}

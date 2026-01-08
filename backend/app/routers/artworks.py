@@ -249,6 +249,42 @@ async def delete_artwork(artwork_id: str):
         raise HTTPException(status_code=500, detail=f"Error deleting artwork: {str(e)}")
 
 
+# --- Recommendations Endpoint ---
+
+@router.get("/{artwork_id}/recommendations", tags=["recommendations"])
+async def get_recommendations(
+    artwork_id: str,
+    limit: int = Query(5, ge=1, le=20, description="Maximum number of recommendations")
+):
+    """
+    Get artwork recommendations based on the specified artwork.
+    
+    Returns similar artworks that share the same artist, period, or style.
+    Artworks are scored by similarity (same artist = 3, same period = 2, same style = 1)
+    and returned in order of total score.
+    
+    **Path Parameters:**
+    - `artwork_id`: The ID of the artwork to get recommendations for
+    
+    **Query Parameters:**
+    - `limit` (optional): Maximum number of recommendations (default: 5, max: 20)
+    
+    **Response:**
+    Array of similar artworks with their details.
+    """
+    try:
+        # Verify artwork exists
+        artwork = artwork_service.get_artwork(artwork_id)
+        if not artwork:
+            raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
+        
+        return artwork_service.get_recommendations(artwork_id, limit=limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting recommendations: {str(e)}")
+
+
 # --- Provenance Endpoints ---
 
 @router.get("/{artwork_id}/provenance", response_model=List[ProvenanceRecord])
