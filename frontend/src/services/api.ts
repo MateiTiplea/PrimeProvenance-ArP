@@ -273,12 +273,16 @@ export interface SearchFilters {
 }
 
 export interface SearchResponse {
-  results: Artwork[];
+  query: string;
   total: number;
+  page: number;
+  limit: number;
+  results: Artwork[];
   facets?: {
     artists: { name: string; count: number }[];
     periods: { name: string; count: number }[];
     media: { name: string; count: number }[];
+    locations: { name: string; count: number }[];
   };
 }
 

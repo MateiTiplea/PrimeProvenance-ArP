@@ -77,3 +77,30 @@ class ArtworkListResponse(BaseModel):
     
     class Config:
         populate_by_name = True
+
+
+class FacetItem(BaseModel):
+    """A single facet option with count."""
+    
+    name: str
+    count: int
+
+
+class SearchFacets(BaseModel):
+    """Facet counts for search filtering."""
+    
+    artists: List[FacetItem] = []
+    periods: List[FacetItem] = []
+    media: List[FacetItem] = []
+    locations: List[FacetItem] = []
+
+
+class SearchResponse(BaseModel):
+    """Search response with results and facets."""
+    
+    query: str
+    total: int
+    page: int
+    limit: int
+    results: List[Dict[str, Any]]
+    facets: Optional[SearchFacets] = None
