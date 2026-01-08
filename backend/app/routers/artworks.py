@@ -1,8 +1,14 @@
 """Artworks router."""
 
-from fastapi import APIRouter, HTTPException, Query
+import io
+from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi.responses import JSONResponse
 from typing import Optional, List
+import qrcode
+from rdflib import Graph, Namespace, Literal, URIRef
+from rdflib.namespace import RDF, RDFS, XSD
 
+from ..config import settings
 from ..models.artwork import ArtworkCreate, ArtworkUpdate, ArtworkResponse, ArtworkListResponse
 from ..models.provenance import ProvenanceRecord, ProvenanceEventCreate, ProvenanceEventUpdate
 from ..models.external import ArtworkEnrichment, DBpediaArtworkInfo, WikidataArtworkInfo, GettyTerm, DBpediaArtistInfo, WikidataArtistInfo, LocalArtistInfo
@@ -11,6 +17,11 @@ from ..services.external_sparql_service import external_sparql_service
 from ..services.sparql_service import sparql_service
 
 router = APIRouter(prefix="/artworks", tags=["artworks"])
+
+# Namespaces for RDF serialization
+SCHEMA = Namespace("https://schema.org/")
+ARP = Namespace("http://example.org/arp#")
+DC = Namespace("http://purl.org/dc/elements/1.1/")
 
 
 @router.get("/", response_model=ArtworkListResponse)
@@ -34,14 +45,167 @@ async def list_artworks(
         raise HTTPException(status_code=500, detail=f"Error listing artworks: {str(e)}")
 
 
-@router.get("/{artwork_id}", response_model=ArtworkResponse)
-async def get_artwork(artwork_id: str):
-    """Get a single artwork by ID."""
+def _artwork_to_jsonld(artwork: ArtworkResponse) -> dict:
+    """Convert artwork to JSON-LD format."""
+    jsonld = {
+        "@context": "https://schema.org",
+        "@type": "VisualArtwork",
+        "@id": f"{settings.frontend_base_url}/artworks/{artwork.id}",
+        "name": artwork.title,
+    }
+    if artwork.description:
+        jsonld["description"] = artwork.description
+    if artwork.artist:
+        jsonld["creator"] = {"@type": "Person", "name": artwork.artist}
+    if artwork.dateCreated:
+        jsonld["dateCreated"] = artwork.dateCreated
+    if artwork.medium:
+        jsonld["artMedium"] = artwork.medium
+    if artwork.currentLocation:
+        jsonld["contentLocation"] = {"@type": "Place", "name": artwork.currentLocation}
+    if artwork.imageUrl:
+        jsonld["image"] = artwork.imageUrl
+    if artwork.period:
+        jsonld["temporalCoverage"] = artwork.period
+    if artwork.style:
+        jsonld["genre"] = artwork.style
+    
+    # Add sameAs links
+    same_as = []
+    if artwork.externalLinks:
+        if artwork.externalLinks.dbpedia:
+            same_as.append(artwork.externalLinks.dbpedia)
+        if artwork.externalLinks.wikidata:
+            same_as.append(artwork.externalLinks.wikidata)
+        if artwork.externalLinks.getty:
+            same_as.append(artwork.externalLinks.getty)
+    if same_as:
+        jsonld["sameAs"] = same_as
+    
+    return jsonld
+
+
+def _artwork_to_rdf(artwork: ArtworkResponse, format: str = "turtle") -> str:
+    """Convert artwork to RDF format (turtle or xml)."""
+    g = Graph()
+    g.bind("schema", SCHEMA)
+    g.bind("arp", ARP)
+    g.bind("dc", DC)
+    
+    artwork_uri = URIRef(f"{ARP}{artwork.id}")
+    
+    g.add((artwork_uri, RDF.type, SCHEMA.VisualArtwork))
+    g.add((artwork_uri, SCHEMA.name, Literal(artwork.title)))
+    
+    if artwork.description:
+        g.add((artwork_uri, SCHEMA.description, Literal(artwork.description)))
+    if artwork.artist:
+        g.add((artwork_uri, DC.creator, Literal(artwork.artist)))
+    if artwork.dateCreated:
+        g.add((artwork_uri, SCHEMA.dateCreated, Literal(artwork.dateCreated)))
+    if artwork.medium:
+        g.add((artwork_uri, SCHEMA.artMedium, Literal(artwork.medium)))
+    if artwork.currentLocation:
+        g.add((artwork_uri, SCHEMA.contentLocation, Literal(artwork.currentLocation)))
+    if artwork.imageUrl:
+        g.add((artwork_uri, SCHEMA.image, URIRef(artwork.imageUrl)))
+    
+    return g.serialize(format=format)
+
+
+@router.get("/{artwork_id}/qr", tags=["sharing"])
+async def get_artwork_qr(
+    artwork_id: str,
+    size: int = Query(256, ge=64, le=1024, description="QR code size in pixels")
+):
+    """
+    Generate a QR code for the artwork's shareable URL.
+    
+    The QR code encodes the frontend URL for the artwork detail page.
+    Scan with any QR reader to open the artwork page.
+    """
+    try:
+        # Verify artwork exists
+        artwork = artwork_service.get_artwork(artwork_id)
+        if not artwork:
+            raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
+        
+        # Generate URL for QR code
+        url = f"{settings.frontend_base_url}/artworks/{artwork_id}"
+        
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+        
+        # Generate image
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Resize if needed
+        if size != 256:
+            img = img.resize((size, size))
+        
+        # Save to buffer
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        
+        return Response(
+            content=buffer.getvalue(),
+            media_type="image/png",
+            headers={
+                "Content-Disposition": f'inline; filename="{artwork_id}-qr.png"',
+                "X-QR-URL": url
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
+
+
+@router.get("/{artwork_id}")
+async def get_artwork(artwork_id: str, request: Request):
+    """
+    Get a single artwork by ID with content negotiation.
+    
+    Supports multiple formats via Accept header:
+    - application/json (default)
+    - application/ld+json (JSON-LD)
+    - application/rdf+xml (RDF/XML)
+    - text/turtle (Turtle RDF)
+    """
     try:
         artwork = artwork_service.get_artwork(artwork_id)
         if not artwork:
             raise HTTPException(status_code=404, detail=f"Artwork '{artwork_id}' not found")
-        return artwork
+        
+        # Content negotiation based on Accept header
+        accept = request.headers.get("accept", "application/json")
+        
+        if "application/ld+json" in accept:
+            return JSONResponse(
+                content=_artwork_to_jsonld(artwork),
+                media_type="application/ld+json"
+            )
+        elif "application/rdf+xml" in accept:
+            return Response(
+                content=_artwork_to_rdf(artwork, "xml"),
+                media_type="application/rdf+xml"
+            )
+        elif "text/turtle" in accept:
+            return Response(
+                content=_artwork_to_rdf(artwork, "turtle"),
+                media_type="text/turtle"
+            )
+        else:
+            # Default: return JSON (Pydantic model)
+            return artwork
     except HTTPException:
         raise
     except Exception as e:

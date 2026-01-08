@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { artworkApi, type Artwork, type ProvenanceRecord, type ArtworkEnrichment } from '../services/api';
-import { ArtworkDetailSkeleton, ErrorMessage, NotFound, OptimizedImage, JsonLdScript } from '../components';
+import { ArtworkDetailSkeleton, ErrorMessage, NotFound, OptimizedImage, JsonLdScript, QRCodeModal } from '../components';
 
 // Helper to extract a numeric year from various date formats
 const extractYear = (dateStr: string): number | null => {
@@ -72,6 +72,7 @@ const ArtworkDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // Fetch artwork data
   const fetchArtwork = useCallback(async () => {
@@ -400,13 +401,10 @@ const ArtworkDetailPage = () => {
             {/* QR Code Button */}
             <div className="mt-8">
               <button
-                onClick={() => {
-                  // Future: Implement QR code modal
-                  alert('QR Code feature coming soon!');
-                }}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-gold to-gold-dark px-6 py-3 font-medium text-charcoal shadow-md hover:shadow-lg transition-shadow"
+                onClick={() => setQrModalOpen(true)}
+                className="cursor-pointer inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-gold to-gold-dark px-6 py-3 font-medium text-charcoal shadow-md hover:shadow-lg transition-shadow"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
                 Generate QR Code
@@ -472,8 +470,17 @@ const ArtworkDetailPage = () => {
           </section>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        artworkId={artwork.id}
+        artworkTitle={artwork.title}
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+      />
     </div>
   );
+
 };
 
 export default ArtworkDetailPage;

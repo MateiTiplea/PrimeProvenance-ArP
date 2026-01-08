@@ -18,8 +18,12 @@ class Settings(BaseSettings):
     wikidata_endpoint: str = "https://query.wikidata.org/sparql"
     getty_endpoint: str = "http://vocab.getty.edu/sparql"
 
+    # Frontend URL for QR codes and shareable links
+    frontend_base_url: str = "http://localhost:3000"
+
     # Cache settings
     external_cache_ttl: int = 3600  # seconds (1 hour)
+
 
     @property
     def fuseki_query_endpoint(self) -> str:
