@@ -3,11 +3,12 @@ export { default as Footer } from './Footer';
 export { default as ArtworkCard } from './ArtworkCard';
 export { default as ErrorMessage, NotFound } from './ErrorMessage';
 export { default as OptimizedImage, preloadImage } from './OptimizedImage';
-export { 
+export {
   default as Spinner,
   ArtworkCardSkeleton,
   ArtworkGridSkeleton,
   ArtworkDetailSkeleton,
   PageLoading
 } from './Loading';
+export { default as JsonLdScript } from './JsonLdScript';
 
