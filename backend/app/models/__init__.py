@@ -14,6 +14,19 @@ from .provenance import (
     ProvenanceEventUpdate,
     ProvenanceChainResponse,
 )
+from .statistics import (
+    GettyMaterialStat,
+    MaterialDistribution,
+    HierarchyStat,
+    MaterialHierarchyResponse,
+    PeriodMaterialStat,
+    TemporalTrend,
+    TemporalTrendsResponse,
+    CrossAnalysisCell,
+    CrossAnalysisResponse,
+    StatisticsQueryRequest,
+    StatisticsQueryResponse,
+)
 
 __all__ = [
     "ArtworkBase",
@@ -26,5 +39,16 @@ __all__ = [
     "ProvenanceEventCreate",
     "ProvenanceEventUpdate",
     "ProvenanceChainResponse",
+    "GettyMaterialStat",
+    "MaterialDistribution",
+    "HierarchyStat",
+    "MaterialHierarchyResponse",
+    "PeriodMaterialStat",
+    "TemporalTrend",
+    "TemporalTrendsResponse",
+    "CrossAnalysisCell",
+    "CrossAnalysisResponse",
+    "StatisticsQueryRequest",
+    "StatisticsQueryResponse",
 ]
 

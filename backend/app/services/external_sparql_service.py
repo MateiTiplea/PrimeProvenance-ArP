@@ -566,6 +566,146 @@ class ExternalSPARQLService:
         """
         return [self.get_getty_term(uri) for uri in material_uris]
 
+    def batch_lookup_getty_labels(self, uris: List[str]) -> Dict[str, str]:
+        """
+        Batch lookup Getty AAT labels for multiple URIs.
+
+        More efficient for statistics queries that need labels for many URIs.
+
+        Args:
+            uris: List of Getty AAT URIs
+
+        Returns:
+            Dictionary mapping URI to preferred label
+        """
+        if not uris:
+            return {}
+
+        labels: Dict[str, str] = {}
+
+        # Check cache first and collect uncached URIs
+        uncached_uris = []
+        for uri in uris:
+            cache_key = f"getty:label:{uri}"
+            cached = self.cache.get(cache_key)
+            if cached is not None:
+                labels[uri] = cached
+            else:
+                uncached_uris.append(uri)
+
+        # Fetch uncached labels
+        for uri in uncached_uris:
+            info = self.get_getty_term(uri)
+            label = info.get("prefLabel", uri) if "error" not in info else uri
+            labels[uri] = label
+            # Cache the individual label
+            cache_key = f"getty:label:{uri}"
+            self.cache.set(cache_key, label)
+
+        return labels
+
+    def get_getty_hierarchy(self, aat_uri: str, max_depth: int = 5) -> List[Dict[str, Any]]:
+        """
+        Fetch the full hierarchy chain for a Getty AAT term.
+
+        Traverses up the gvp:broaderGeneric relationships to build
+        the complete hierarchy from the term to its top-level category.
+
+        Args:
+            aat_uri: Full Getty AAT URI or just the AAT ID
+            max_depth: Maximum depth to traverse (default 5)
+
+        Returns:
+            List of hierarchy levels from specific to broad, each with:
+            - uri: The Getty AAT URI
+            - label: The preferred label
+            - level: The hierarchy level (0 = input term)
+        """
+        # Normalize URI
+        if not aat_uri.startswith("http"):
+            aat_uri = f"http://vocab.getty.edu/aat/{aat_uri}"
+
+        cache_key = f"getty:hierarchy:{aat_uri}:{max_depth}"
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        hierarchy = []
+        current_uri = aat_uri
+        visited = set()
+
+        for level in range(max_depth):
+            if current_uri in visited:
+                break
+            visited.add(current_uri)
+
+            query = f"""
+            PREFIX skos: <{self.PREFIXES['skos']}>
+            PREFIX gvp: <{self.PREFIXES['gvp']}>
+            
+            SELECT ?prefLabel ?broader ?broaderLabel WHERE {{
+                <{current_uri}> skos:prefLabel ?prefLabel .
+                FILTER(LANG(?prefLabel) = "en" || LANG(?prefLabel) = "")
+                
+                OPTIONAL {{
+                    <{current_uri}> gvp:broaderGeneric ?broader .
+                    ?broader skos:prefLabel ?broaderLabel .
+                    FILTER(LANG(?broaderLabel) = "en" || LANG(?broaderLabel) = "")
+                }}
+            }}
+            LIMIT 1
+            """
+
+            term_cache_key = f"getty:hierarchy:term:{current_uri}"
+            results = self._execute_query(self.getty, query, term_cache_key)
+
+            if not results or not results.get("results", {}).get("bindings"):
+                break
+
+            binding = results["results"]["bindings"][0]
+            label = self._extract_value(binding, "prefLabel")
+
+            hierarchy.append({
+                "uri": current_uri,
+                "label": label or current_uri,
+                "level": level
+            })
+
+            broader_uri = self._extract_value(binding, "broader")
+            if not broader_uri:
+                break
+
+            current_uri = broader_uri
+
+        # Cache the full hierarchy
+        self.cache.set(cache_key, hierarchy)
+
+        return hierarchy
+
+    def get_getty_broader_categories(self, uris: List[str]) -> Dict[str, Dict[str, Any]]:
+        """
+        Get broader category info for multiple Getty AAT URIs.
+
+        Args:
+            uris: List of Getty AAT URIs
+
+        Returns:
+            Dictionary mapping each URI to its broader category info
+        """
+        results = {}
+
+        for uri in uris:
+            info = self.get_getty_term(uri)
+            if "error" not in info and info.get("broader"):
+                results[uri] = {
+                    "broader_uri": info["broader"]["uri"],
+                    "broader_label": info["broader"]["label"]
+                }
+            else:
+                results[uri] = None
+
+        return results
+
     # =========================================================================
     # Combined Enrichment
     # =========================================================================

@@ -204,6 +204,118 @@ WHERE {
 }
 LIMIT 10`,
   },
+  {
+    name: "Artworks by Getty Material",
+    description: "Count artworks grouped by Getty AAT material types",
+    category: "Getty Statistics",
+    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX schema: <http://schema.org/>
+PREFIX arp: <http://example.org/arp#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+
+SELECT ?material (COUNT(DISTINCT ?artwork) AS ?count)
+WHERE {
+  ?artwork a arp:Artwork ;
+           schema:artMedium ?material .
+  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
+}
+GROUP BY ?material
+ORDER BY DESC(?count)`,
+  },
+  {
+    name: "Getty Material with Labels (Federated)",
+    description: "Fetch Getty AAT material labels via federated query",
+    category: "Getty Statistics",
+    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX arp: <http://example.org/arp#>
+
+SELECT ?material ?label (COUNT(DISTINCT ?artwork) AS ?count)
+WHERE {
+  ?artwork a arp:Artwork ;
+           schema:artMedium ?material .
+  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
+  
+  SERVICE <http://vocab.getty.edu/sparql> {
+    ?material skos:prefLabel ?label .
+    FILTER(LANG(?label) = "en")
+  }
+}
+GROUP BY ?material ?label
+ORDER BY DESC(?count)`,
+  },
+  {
+    name: "Getty Material Hierarchy",
+    description: "Show Getty AAT broader categories for artwork materials",
+    category: "Getty Statistics",
+    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX arp: <http://example.org/arp#>
+
+SELECT ?material ?label ?broaderLabel (COUNT(DISTINCT ?artwork) AS ?count)
+WHERE {
+  ?artwork a arp:Artwork ;
+           schema:artMedium ?material .
+  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
+  
+  SERVICE <http://vocab.getty.edu/sparql> {
+    ?material skos:prefLabel ?label .
+    FILTER(LANG(?label) = "en")
+    OPTIONAL {
+      ?material gvp:broaderGeneric ?broader .
+      ?broader skos:prefLabel ?broaderLabel .
+      FILTER(LANG(?broaderLabel) = "en")
+    }
+  }
+}
+GROUP BY ?material ?label ?broaderLabel
+ORDER BY ?broaderLabel DESC(?count)`,
+  },
+  {
+    name: "Temporal Material Trends",
+    description: "Material distribution across art historical periods",
+    category: "Getty Statistics",
+    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX schema: <http://schema.org/>
+PREFIX arp: <http://example.org/arp#>
+
+SELECT ?period ?material (COUNT(DISTINCT ?artwork) AS ?count)
+WHERE {
+  ?artwork a arp:Artwork ;
+           arp:artworkPeriod ?period ;
+           schema:artMedium ?material .
+  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
+}
+GROUP BY ?period ?material
+ORDER BY ?period DESC(?count)`,
+  },
+  {
+    name: "Cross-Analysis: Period x Material",
+    description: "Pivot table showing material usage across periods",
+    category: "Getty Statistics",
+    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX arp: <http://example.org/arp#>
+
+SELECT ?period ?materialLabel (COUNT(DISTINCT ?artwork) AS ?count)
+WHERE {
+  ?artwork a arp:Artwork ;
+           arp:artworkPeriod ?period ;
+           schema:artMedium ?material .
+  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
+  
+  SERVICE <http://vocab.getty.edu/sparql> {
+    ?material skos:prefLabel ?materialLabel .
+    FILTER(LANG(?materialLabel) = "en")
+  }
+}
+GROUP BY ?period ?materialLabel
+ORDER BY ?period ?materialLabel`,
+  },
 ];
 
 interface SPARQLResult {
@@ -543,6 +655,14 @@ const SPARQLPage = () => {
                   </p>
                   <code className="mt-1 block text-xs text-charcoal-light bg-charcoal/5 rounded px-2 py-1 break-all">
                     https://query.wikidata.org/sparql
+                  </code>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gold-dark uppercase tracking-wide">
+                    Getty Vocabularies
+                  </p>
+                  <code className="mt-1 block text-xs text-charcoal-light bg-charcoal/5 rounded px-2 py-1 break-all">
+                    http://vocab.getty.edu/sparql
                   </code>
                 </div>
               </div>
