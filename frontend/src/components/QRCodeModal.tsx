@@ -110,7 +110,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute right-4 top-4 rounded-lg p-2 text-charcoal-light hover:bg-parchment hover:text-charcoal transition-colors"
+                    className="cursor-pointer absolute right-4 top-4 rounded-lg p-2 text-charcoal-light hover:bg-parchment hover:text-charcoal transition-colors"
                     aria-label="Close modal"
                 >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -146,7 +146,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                             <p className="mt-3 text-sm text-burgundy">{error}</p>
                             <button
                                 onClick={fetchQrCode}
-                                className="mt-3 text-sm font-medium text-gold hover:text-gold-dark"
+                                className="cursor-pointer mt-3 text-sm font-medium text-gold hover:text-gold-dark"
                             >
                                 Try again
                             </button>
@@ -178,7 +178,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                         />
                         <button
                             onClick={handleCopyUrl}
-                            className="rounded-lg border border-bronze/30 bg-ivory px-3 py-2 text-charcoal hover:border-gold hover:text-gold transition-colors"
+                            className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-3 py-2 text-charcoal hover:border-gold hover:text-gold transition-colors"
                             title="Copy URL"
                         >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,7 +193,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                     <button
                         onClick={handleDownload}
                         disabled={!qrCodeUrl || loading}
-                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-gold to-gold-dark px-4 py-2.5 font-medium text-charcoal shadow-md hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="cursor-pointer flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-gold to-gold-dark px-4 py-2.5 font-medium text-charcoal shadow-md hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -202,7 +202,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                     </button>
                     <button
                         onClick={onClose}
-                        className="flex-1 rounded-lg border border-bronze/30 bg-ivory px-4 py-2.5 font-medium text-charcoal hover:border-gold transition-colors"
+                        className="cursor-pointer flex-1 rounded-lg border border-bronze/30 bg-ivory px-4 py-2.5 font-medium text-charcoal hover:border-gold transition-colors"
                     >
                         Close
                     </button>
