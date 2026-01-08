@@ -1,70 +1,70 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { artworkApi, type Artwork, type ProvenanceRecord, type ArtworkEnrichment } from '../services/api';
-import { ArtworkDetailSkeleton, ErrorMessage, NotFound, OptimizedImage } from '../components';
+import { ArtworkDetailSkeleton, ErrorMessage, NotFound, OptimizedImage, JsonLdScript } from '../components';
 
 // Helper to extract a numeric year from various date formats
 const extractYear = (dateStr: string): number | null => {
   // Try ISO format first (YYYY-MM-DD or YYYY)
   const isoMatch = dateStr.match(/^(\d{4})/);
   if (isoMatch) return parseInt(isoMatch[1], 10);
-  
+
   // Try "c. YYYY" or "circa YYYY" format
   const circaMatch = dateStr.match(/c\.?\s*(\d{4})/i);
   if (circaMatch) return parseInt(circaMatch[1], 10);
-  
+
   // Try extracting any 4-digit year
   const yearMatch = dateStr.match(/\b(\d{4})\b/);
   if (yearMatch) return parseInt(yearMatch[1], 10);
-  
+
   return null;
 };
 
 // Helper to format ISO dates to full readable dates (e.g., "May 15, 1838")
 const formatDate = (dateStr: string): string => {
   if (!dateStr) return '';
-  
+
   // Extract date part if it includes time
   let datePart = dateStr;
   if (dateStr.includes('T')) {
     datePart = dateStr.split('T')[0];
   }
-  
+
   // Handle YYYY-MM-DD format
   const isoMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoMatch) {
     const [, year, month, day] = isoMatch;
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   }
-  
+
   // Handle YYYY-MM format
   const yearMonthMatch = datePart.match(/^(\d{4})-(\d{2})$/);
   if (yearMonthMatch) {
     const [, year, month] = yearMonthMatch;
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'long'
     });
   }
-  
+
   // Handle just YYYY
   if (datePart.match(/^\d{4}$/)) {
     return datePart;
   }
-  
+
   // Return as-is for other formats
   return dateStr;
 };
 
 const ArtworkDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  
+
   // State
   const [artwork, setArtwork] = useState<Artwork | null>(null);
   const [provenance, setProvenance] = useState<ProvenanceRecord[]>([]);
@@ -76,22 +76,22 @@ const ArtworkDetailPage = () => {
   // Fetch artwork data
   const fetchArtwork = useCallback(async () => {
     if (!id) return;
-    
+
     setLoading(true);
     setError(null);
     setNotFound(false);
-    
+
     try {
       // Fetch artwork details
       const artworkResponse = await artworkApi.getById(id);
       setArtwork(artworkResponse.data);
-      
+
       // Fetch provenance in parallel
       const [provenanceResponse, enrichmentResponse] = await Promise.allSettled([
         artworkApi.getProvenance(id),
         artworkApi.getEnrichment(id)
       ]);
-      
+
       if (provenanceResponse.status === 'fulfilled') {
         // Sort by order if available, fallback to date, push undefined to end
         const sortedProvenance = [...provenanceResponse.value.data].sort((a, b) => {
@@ -129,7 +129,7 @@ const ArtworkDetailPage = () => {
       } else {
         console.warn('Failed to fetch provenance:', provenanceResponse.reason);
       }
-      
+
       if (enrichmentResponse.status === 'fulfilled') {
         setEnrichment(enrichmentResponse.value.data);
       } else {
@@ -160,14 +160,14 @@ const ArtworkDetailPage = () => {
   // Merge both sources: prefer enrichment data, fallback to artwork.externalLinks per link type
   const getExternalLinks = () => {
     const links: { name: string; url: string }[] = [];
-    
+
     // DBpedia: try enrichment first, fallback to artwork.externalLinks
     if (enrichment?.dbpedia?.uri) {
       links.push({ name: 'DBpedia', url: enrichment.dbpedia.uri });
     } else if (artwork?.externalLinks?.dbpedia) {
       links.push({ name: 'DBpedia', url: artwork.externalLinks.dbpedia });
     }
-    
+
     // Wikidata: try enrichment first, fallback to artwork.externalLinks
     if (enrichment?.wikidata?.uri) {
       // Convert entity URI to wiki page URL
@@ -182,14 +182,14 @@ const ArtworkDetailPage = () => {
     } else if (artwork?.externalLinks?.wikidata) {
       links.push({ name: 'Wikidata', url: artwork.externalLinks.wikidata });
     }
-    
+
     // Getty: try enrichment first, fallback to artwork.externalLinks
     if (enrichment?.getty && enrichment.getty.length > 0) {
       links.push({ name: 'Getty AAT', url: enrichment.getty[0].uri });
     } else if (artwork?.externalLinks?.getty) {
       links.push({ name: 'Getty AAT', url: artwork.externalLinks.getty });
     }
-    
+
     return links;
   };
 
@@ -213,10 +213,10 @@ const ArtworkDetailPage = () => {
   if (notFound) {
     return (
       <div className="min-h-screen bg-parchment">
-        <NotFound 
-          itemType="artwork" 
-          backLink="/artworks" 
-          backLinkText="Back to collection" 
+        <NotFound
+          itemType="artwork"
+          backLink="/artworks"
+          backLinkText="Back to collection"
         />
       </div>
     );
@@ -240,24 +240,28 @@ const ArtworkDetailPage = () => {
   const externalLinks = getExternalLinks();
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-parchment"
       vocab="https://schema.org/"
       typeof="VisualArtwork"
+      resource={`#artwork-${artwork.id}`}
     >
+      {/* JSON-LD Structured Data */}
+      <JsonLdScript artwork={artwork} provenance={provenance} />
+
       {/* Breadcrumb */}
       <div className="border-b border-bronze/20 bg-ivory">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-2 text-sm">
+          <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
             <Link to="/" className="text-charcoal-light hover:text-gold transition-colors">
               Home
             </Link>
-            <span className="text-bronze">/</span>
+            <span className="text-bronze" aria-hidden="true">/</span>
             <Link to="/artworks" className="text-charcoal-light hover:text-gold transition-colors">
               Collection
             </Link>
-            <span className="text-bronze">/</span>
-            <span className="text-charcoal truncate max-w-xs" property="name">{artwork.title}</span>
+            <span className="text-bronze" aria-hidden="true">/</span>
+            <span className="text-charcoal truncate max-w-xs" property="name" aria-current="page">{artwork.title}</span>
           </nav>
         </div>
       </div>
@@ -283,7 +287,7 @@ const ArtworkDetailPage = () => {
             <h1 className="font-heading text-3xl font-bold text-charcoal sm:text-4xl" property="name">
               {artwork.title}
             </h1>
-            
+
             {artwork.artist && (
               <p className="mt-2 text-xl text-charcoal-light">
                 by <span property="creator" typeof="Person"><span property="name">{artwork.artist}</span></span>
@@ -353,7 +357,7 @@ const ArtworkDetailPage = () => {
                   const birthDate = enrichment.artist_dbpedia?.birthDate || enrichment.artist_wikidata?.birthDate || enrichment.artist_local?.birthDate;
                   const deathDate = enrichment.artist_dbpedia?.deathDate || enrichment.artist_wikidata?.deathDate || enrichment.artist_local?.deathDate;
                   const nationality = enrichment.artist_local?.nationality;
-                  
+
                   if (birthDate || deathDate || nationality) {
                     return (
                       <p className="mt-2 text-sm text-bronze">
@@ -380,9 +384,10 @@ const ArtworkDetailPage = () => {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      property="sameAs"
                       className="inline-flex items-center gap-2 rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal hover:border-gold hover:text-gold transition-colors"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                       {link.name}
@@ -394,7 +399,7 @@ const ArtworkDetailPage = () => {
 
             {/* QR Code Button */}
             <div className="mt-8">
-              <button 
+              <button
                 onClick={() => {
                   // Future: Implement QR code modal
                   alert('QR Code feature coming soon!');
@@ -410,46 +415,53 @@ const ArtworkDetailPage = () => {
           </div>
         </div>
 
-        {/* Provenance Timeline */}
+        {/* Provenance Timeline with RDFa */}
         {provenance.length > 0 && (
-          <div className="mt-16">
-            <h2 className="font-heading text-2xl font-bold text-charcoal">Provenance History</h2>
+          <section className="mt-16" aria-labelledby="provenance-heading">
+            <h2 id="provenance-heading" className="font-heading text-2xl font-bold text-charcoal">Provenance History</h2>
             <p className="mt-2 text-charcoal-light">
               Trace the ownership and location history of this artwork.
             </p>
 
-            <div className="mt-8">
+            <div className="mt-8" property="subjectOf" typeof="ItemList">
               <div className="relative border-l-2 border-gold/30 pl-8">
                 {provenance.map((record, index) => (
-                  <div 
+                  <div
                     key={record.id || index}
                     className="relative mb-8 last:mb-0"
+                    property="itemListElement"
+                    typeof="ListItem"
                   >
+                    <meta property="position" content={String(index + 1)} />
                     {/* Timeline dot */}
-                    <div className="absolute -left-[41px] flex h-6 w-6 items-center justify-center rounded-full border-2 border-gold bg-ivory">
+                    <div className="absolute -left-[41px] flex h-6 w-6 items-center justify-center rounded-full border-2 border-gold bg-ivory" aria-hidden="true">
                       <div className="h-2 w-2 rounded-full bg-gold" />
                     </div>
 
-                    <div className="rounded-xl border border-bronze/20 bg-ivory p-6 shadow-sm">
+                    <div className="rounded-xl border border-bronze/20 bg-ivory p-6 shadow-sm" property="item" typeof="TransferAction">
                       <div className="flex flex-wrap items-center gap-4">
                         {record.date && (
-                          <span className="rounded-full bg-gold/10 px-3 py-1 text-sm font-medium text-gold">
+                          <span className="rounded-full bg-gold/10 px-3 py-1 text-sm font-medium text-gold" property="startTime">
                             {extractYear(record.date) ?? record.date}
                           </span>
                         )}
-                        <span className="text-sm font-medium uppercase tracking-wider text-burgundy">
+                        <span className="text-sm font-medium uppercase tracking-wider text-burgundy" property="name">
                           {record.event}
                         </span>
                       </div>
                       <div className="mt-3 space-y-1">
                         {record.owner && (
-                          <p className="font-medium text-charcoal">{record.owner}</p>
+                          <p className="font-medium text-charcoal" property="agent" typeof="Person">
+                            <span property="name">{record.owner}</span>
+                          </p>
                         )}
                         {record.location && (
-                          <p className="text-sm text-charcoal-light">{record.location}</p>
+                          <p className="text-sm text-charcoal-light" property="location" typeof="Place">
+                            <span property="name">{record.location}</span>
+                          </p>
                         )}
                         {record.description && (
-                          <p className="mt-2 text-sm text-charcoal-light">{record.description}</p>
+                          <p className="mt-2 text-sm text-charcoal-light" property="description">{record.description}</p>
                         )}
                       </div>
                     </div>
@@ -457,7 +469,7 @@ const ArtworkDetailPage = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </section>
         )}
       </div>
     </div>
