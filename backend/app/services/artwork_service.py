@@ -1,6 +1,7 @@
 """Artwork service for RDF/SPARQL operations."""
 
 import uuid
+import re
 from typing import Any, Dict, List, Optional
 
 from ..models.artwork import (
@@ -951,6 +952,25 @@ class ArtworkService:
 
         return facets
 
+    def _extract_keywords(self, text: str) -> List[str]:
+        """Extract significant keywords from text."""
+        if not text:
+            return []
+        
+        # Simple stop words list
+        stop_words = {
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "of", 
+            "for", "with", "is", "was", "are", "were", "by", "from", "as", "it", 
+            "that", "this", "which", "be", "has", "have", "had", "not", "but"
+        }
+        
+        # Tokenize and clean
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
+        keywords = [w for w in words if w not in stop_words]
+        
+        # Return unique keywords, top 5
+        return list(set(keywords))[:5]
+
     def get_recommendations(
         self, artwork_id: str, limit: int = 5
     ) -> List[Dict[str, Any]]:
@@ -965,6 +985,21 @@ class ArtworkService:
         # Build conditions for finding similar artworks
         union_clauses = []
         
+        if source.description:
+            # Description keywords
+            keywords = self._extract_keywords(source.description)
+            if keywords:
+                # Construct values string for SPARQL: "kw1" "kw2" ...
+                values_str = " ".join([f'"{kw}"' for kw in keywords])
+                union_clauses.append(f"""
+                    {{
+                        ?artwork dc:description ?desc .
+                        VALUES ?keyword {{ {values_str} }}
+                        FILTER(CONTAINS(LCASE(?desc), ?keyword))
+                        BIND(2 AS ?score)
+                    }}
+                """)
+
         if source.artist:
             # Same artist
             union_clauses.append(f"""
@@ -982,7 +1017,7 @@ class ArtworkService:
                 {{
                     ?artwork arp:artworkPeriod ?matchPeriod .
                     FILTER(LCASE(?matchPeriod) = LCASE("{self._escape_literal(source.period)}"))
-                    BIND(2 AS ?score)
+                    BIND(1 AS ?score)
                 }}
             """)
         

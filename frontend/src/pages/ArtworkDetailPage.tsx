@@ -88,11 +88,10 @@ const ArtworkDetailPage = () => {
       const artworkResponse = await artworkApi.getById(id);
       setArtwork(artworkResponse.data);
 
-      // Fetch provenance, enrichment, and recommendations in parallel
-      const [provenanceResponse, enrichmentResponse, recommendationsResponse] = await Promise.allSettled([
+      // Fetch provenance and enrichment in parallel (critical path)
+      const [provenanceResponse, enrichmentResponse] = await Promise.allSettled([
         artworkApi.getProvenance(id),
-        artworkApi.getEnrichment(id),
-        searchApi.getRecommendations(id)
+        artworkApi.getEnrichment(id)
       ]);
 
       if (provenanceResponse.status === 'fulfilled') {
@@ -139,11 +138,14 @@ const ArtworkDetailPage = () => {
         console.warn('Failed to fetch enrichment:', enrichmentResponse.reason);
       }
 
-      if (recommendationsResponse.status === 'fulfilled') {
-        setRecommendations(recommendationsResponse.value.data);
-      } else {
-        console.warn('Failed to fetch recommendations:', recommendationsResponse.reason);
-      }
+      // Fetch recommendations lazily (non-blocking)
+      searchApi.getRecommendations(id)
+        .then(response => {
+          setRecommendations(response.data);
+        })
+        .catch(err => {
+          console.warn('Failed to fetch recommendations:', err);
+        });
     } catch (err: unknown) {
       console.error('Failed to fetch artwork:', err);
       if (err && typeof err === 'object' && 'response' in err) {
@@ -288,6 +290,7 @@ const ArtworkDetailPage = () => {
               className="w-full h-auto block"
               placeholderClassName="w-full aspect-[4/3]"
               shrinkOnLoad={true}
+              loading="eager"
             />
           </div>
 
@@ -481,47 +484,49 @@ const ArtworkDetailPage = () => {
 
       {/* Recommendations Section */}
       {recommendations.length > 0 && (
-        <section className="mt-16 border-t border-bronze/20 pt-16">
-          <h2 className="font-heading text-2xl font-bold text-charcoal">Similar Artworks</h2>
-          <p className="mt-2 text-charcoal-light">
-            Discover other artworks you might like based on artist, period, or style.
-          </p>
+        <section className="mt-16 border-t border-bronze/20 pt-16 pb-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="font-heading text-2xl font-bold text-charcoal">Similar Artworks</h2>
+            <p className="mt-2 text-charcoal-light">
+              Discover other artworks you might like based on artist, period, or style.
+            </p>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {recommendations.map((rec) => (
-              <Link
-                key={rec.id}
-                to={`/artworks/${rec.id}`}
-                className="group flex flex-col overflow-hidden rounded-xl border border-bronze/20 bg-ivory shadow-sm transition-all hover:border-gold/40 hover:shadow-md"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-parchment-dark">
-                  {rec.imageUrl ? (
-                    <img
-                      src={rec.imageUrl}
-                      alt={rec.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-bronze/40">
-                      <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col p-4">
-                  <h3 className="font-heading text-lg font-semibold text-charcoal group-hover:text-gold transition-colors line-clamp-1">
-                    {rec.title}
-                  </h3>
-                  {rec.artist && (
-                    <p className="mt-1 text-sm text-charcoal-light line-clamp-1">{rec.artist}</p>
-                  )}
-                  <div className="mt-auto pt-3 text-xs text-bronze">
-                    {rec.period && <span>{rec.period}</span>}
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {recommendations.map((rec) => (
+                <Link
+                  key={rec.id}
+                  to={`/artworks/${rec.id}`}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-bronze/20 bg-ivory shadow-sm transition-all hover:border-gold/40 hover:shadow-md"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-parchment-dark">
+                    {rec.imageUrl ? (
+                      <img
+                        src={rec.imageUrl}
+                        alt={rec.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-bronze/40">
+                        <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="font-heading text-lg font-semibold text-charcoal group-hover:text-gold transition-colors line-clamp-1">
+                      {rec.title}
+                    </h3>
+                    {rec.artist && (
+                      <p className="mt-1 text-sm text-charcoal-light line-clamp-1">{rec.artist}</p>
+                    )}
+                    <div className="mt-auto pt-3 text-xs text-bronze">
+                      {rec.period && <span>{rec.period}</span>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       )}
