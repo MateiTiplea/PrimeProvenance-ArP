@@ -1,13 +1,23 @@
-import { Link, NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 const Header = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
+  };
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-      isActive
-        ? 'text-gold'
-        : 'text-charcoal-light hover:text-gold'
-    } after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-gold after:transition-transform after:duration-300 hover:after:scale-x-100 ${
-      isActive ? 'after:scale-x-100' : ''
+    `relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${isActive
+      ? 'text-gold'
+      : 'text-charcoal-light hover:text-gold'
+    } after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-gold after:transition-transform after:duration-300 hover:after:scale-x-100 ${isActive ? 'after:scale-x-100' : ''
     }`;
 
   return (
@@ -15,8 +25,8 @@ const Header = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="group flex items-center gap-3 transition-transform duration-200 hover:scale-[1.02]"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-gold to-gold-dark shadow-md">
@@ -72,9 +82,34 @@ const Header = () => {
 
           {/* Search & Mobile Menu */}
           <div className="flex items-center gap-4">
+            {/* Quick Search Bar */}
+            <form onSubmit={handleSearch} className="relative hidden sm:block">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-48 rounded-full border border-bronze/20 bg-ivory/50 px-4 py-1.5 pl-9 text-sm text-charcoal placeholder:text-bronze/50 focus:border-gold focus:bg-ivory focus:outline-none focus:ring-1 focus:ring-gold transition-all"
+              />
+              <svg
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-charcoal-light"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                />
+              </svg>
+            </form>
+
+            {/* Mobile Search Icon (visible only on small screens) */}
             <Link
               to="/search"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-charcoal-light transition-colors hover:bg-parchment-dark hover:text-charcoal"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-charcoal-light transition-colors hover:bg-parchment-dark hover:text-charcoal sm:hidden"
               aria-label="Search"
             >
               <svg

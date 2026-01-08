@@ -20,13 +20,8 @@ const SearchPage = () => {
   });
 
   // Perform search
+  // Perform search
   const performSearch = useCallback(async (query: string, currentFilters: SearchFilters) => {
-    const hasFilters = Object.values(currentFilters).some(v => v !== undefined);
-    if (!query.trim() && !hasFilters) {
-      setSearchResponse(null);
-      return;
-    }
-
     setIsSearching(true);
     setError(null);
 
@@ -47,16 +42,8 @@ const SearchPage = () => {
     const q = searchParams.get('q') || '';
     setSearchQuery(q);
 
-    // Check if we should perform an initial search
-    const hasFilters =
-      searchParams.has('artist') ||
-      searchParams.has('period') ||
-      searchParams.has('medium') ||
-      searchParams.has('location');
-
-    if (q || hasFilters) {
-      performSearch(q, filters);
-    }
+    // Perform initial search (defaults to "browse all")
+    performSearch(q, filters);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update URL when filters change
