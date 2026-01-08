@@ -11,4 +11,5 @@ export {
   PageLoading
 } from './Loading';
 export { default as JsonLdScript } from './JsonLdScript';
+export { default as QRCodeModal } from './QRCodeModal';
 
