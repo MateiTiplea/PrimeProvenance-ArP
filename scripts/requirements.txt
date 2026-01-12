@@ -1,4 +1,4 @@
-# Romanian Heritage Parser Dependencies
+# Heritage Parser Dependencies
 # Install with: pip install -r requirements.txt
 
 # RDF library for graph manipulation and TTL serialization
@@ -12,3 +12,6 @@ SPARQLWrapper>=2.0.0
 
 # HTTP requests (dependency of SPARQLWrapper, explicit for clarity)
 requests>=2.28.0
+
+# Load environment variables from .env file
+python-dotenv>=1.0.0
