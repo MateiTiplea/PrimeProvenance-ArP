@@ -6,7 +6,7 @@ import axios, {
 
 // API Configuration
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+  import.meta.env.VITE_API_BASE_URL || "https://arp-backend-348542955632.europe-central2.run.app/api";
 
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
@@ -91,7 +91,7 @@ export const artworkApi = {
     search?: string;
     artist?: string;
     period?: string;
-  }) => api.get<ArtworkListResponse>("/artworks", { params }),
+  }) => api.get<ArtworkListResponse>("/artworks/", { params }),
 
   // Get single artwork by ID
   getById: (id: string) => api.get<Artwork>(`/artworks/${id}`),
