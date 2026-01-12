@@ -11,7 +11,7 @@ const AboutPage = () => {
             </span>
           </h1>
           <p className="mt-6 text-center text-lg text-parchment/80">
-            Artwork Provenance — A semantic web platform for exploring 
+            Artwork Provenance — A semantic web platform for exploring
             the histories behind masterpieces
           </p>
         </div>
@@ -23,9 +23,9 @@ const AboutPage = () => {
         <section className="prose prose-lg max-w-none">
           <h2 className="font-heading text-2xl font-bold text-charcoal">Our Mission</h2>
           <p className="text-charcoal-light leading-relaxed">
-            ArP (Artwork Provenance) is a semantic web platform designed to model and manage 
-            the knowledge about the provenance of artistic works. By leveraging linked data 
-            technologies and integrating with major knowledge bases, ArP provides a comprehensive 
+            ArP (Artwork Provenance) is a semantic web platform designed to model and manage
+            the knowledge about the provenance of artistic works. By leveraging linked data
+            technologies and integrating with major knowledge bases, ArP provides a comprehensive
             view of artwork histories, ownership chains, and cultural significance.
           </p>
         </section>
@@ -61,7 +61,7 @@ const AboutPage = () => {
         <section className="mt-16">
           <h2 className="font-heading text-2xl font-bold text-charcoal">Data Sources</h2>
           <p className="mt-4 text-charcoal-light">
-            ArP integrates with multiple external knowledge bases to provide rich, 
+            ArP integrates with multiple external knowledge bases to provide rich,
             interconnected data about artworks and their provenance:
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -100,6 +100,15 @@ const AboutPage = () => {
             >
               <div className="font-heading text-xl font-bold text-charcoal">Europeana</div>
               <p className="mt-2 text-sm text-charcoal-light">European cultural heritage</p>
+            </a>
+            <a
+              href="https://data.gov.ro/dataset/bunuri-culturale-clasate-arta"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-bronze/20 bg-ivory p-6 text-center transition-all hover:border-gold hover:shadow-md"
+            >
+              <div className="font-heading text-xl font-bold text-charcoal">data.gov.ro</div>
+              <p className="mt-2 text-sm text-charcoal-light">Romanian open data portal</p>
             </a>
           </div>
         </section>
