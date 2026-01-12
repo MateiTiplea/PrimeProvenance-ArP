@@ -1,54 +1,73 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { searchApi, type SearchResponse, type SearchFilters } from '../services/api';
+import { useState, useEffect, useCallback } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  searchApi,
+  type SearchResponse,
+  type SearchFilters,
+} from "../services/api";
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // State
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(null);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(
+    null
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'title' | 'date'>(
-    (searchParams.get('sort') as 'title' | 'date') || 'title'
+  const [sortBy, setSortBy] = useState<"title" | "date">(
+    (searchParams.get("sort") as "title" | "date") || "title"
   );
 
   // Pagination
   const limit = 12;
-  const parsedPage = parseInt(searchParams.get('page') || '1', 10);
+  const parsedPage = parseInt(searchParams.get("page") || "1", 10);
   const page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
 
   // Filter state
   const [filters, setFilters] = useState<SearchFilters>({
-    artist: searchParams.get('artist') || undefined,
-    period: searchParams.get('period') || undefined,
-    medium: searchParams.get('medium') || undefined,
-    location: searchParams.get('location') || undefined,
-    style: searchParams.get('style') || undefined,
+    artist: searchParams.get("artist") || undefined,
+    period: searchParams.get("period") || undefined,
+    medium: searchParams.get("medium") || undefined,
+    location: searchParams.get("location") || undefined,
+    style: searchParams.get("style") || undefined,
   });
 
-
   // Perform search
-  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters, currentPage: number = 1, currentSort: 'title' | 'date' = 'title') => {
-    setIsSearching(true);
-    setError(null);
+  const performSearch = useCallback(
+    async (
+      query: string,
+      currentFilters: SearchFilters,
+      currentPage: number = 1,
+      currentSort: "title" | "date" = "title"
+    ) => {
+      setIsSearching(true);
+      setError(null);
 
-    try {
-      const response = await searchApi.search(query, currentFilters, currentPage, limit, currentSort);
-      setSearchResponse(response.data);
-    } catch (err) {
-      console.error('Search error:', err);
-      setError('Failed to search artworks. Please try again.');
-      setSearchResponse(null);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [limit]);
+      try {
+        const response = await searchApi.search(
+          query,
+          currentFilters,
+          currentPage,
+          limit,
+          currentSort
+        );
+        setSearchResponse(response.data);
+      } catch (err) {
+        console.error("Search error:", err);
+        setError("Failed to search artworks. Please try again.");
+        setSearchResponse(null);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [limit]
+  );
 
   // Search on initial load if query param exists or filters are present
   useEffect(() => {
-    const q = searchParams.get('q') || '';
+    const q = searchParams.get("q") || "";
     setSearchQuery(q);
 
     // Perform initial search (defaults to "browse all")
@@ -56,15 +75,19 @@ const SearchPage = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update URL when filters change
-  const updateUrlParams = (query: string, newFilters: SearchFilters, newPage: number = 1) => {
+  const updateUrlParams = (
+    query: string,
+    newFilters: SearchFilters,
+    newPage: number = 1
+  ) => {
     const params = new URLSearchParams();
-    if (query) params.set('q', query);
-    if (newFilters.artist) params.set('artist', newFilters.artist);
-    if (newFilters.period) params.set('period', newFilters.period);
-    if (newFilters.medium) params.set('medium', newFilters.medium);
-    if (newFilters.location) params.set('location', newFilters.location);
-    if (newFilters.style) params.set('style', newFilters.style);
-    if (newPage > 1) params.set('page', String(newPage));
+    if (query) params.set("q", query);
+    if (newFilters.artist) params.set("artist", newFilters.artist);
+    if (newFilters.period) params.set("period", newFilters.period);
+    if (newFilters.medium) params.set("medium", newFilters.medium);
+    if (newFilters.location) params.set("location", newFilters.location);
+    if (newFilters.style) params.set("style", newFilters.style);
+    if (newPage > 1) params.set("page", String(newPage));
     setSearchParams(params);
   };
 
@@ -72,20 +95,25 @@ const SearchPage = () => {
   const goToPage = (newPage: number) => {
     updateUrlParams(searchQuery, filters, newPage);
     performSearch(searchQuery, filters, newPage, sortBy);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const totalPages = searchResponse ? Math.ceil(searchResponse.total / limit) : 0;
+  const totalPages = searchResponse
+    ? Math.ceil(searchResponse.total / limit)
+    : 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const hasFilters = Object.values(filters).some(v => v !== undefined);
+    const hasFilters = Object.values(filters).some((v) => v !== undefined);
     if (!searchQuery.trim() && !hasFilters) return;
     updateUrlParams(searchQuery, filters);
     performSearch(searchQuery, filters, 1, sortBy);
   };
 
-  const handleFilterChange = (filterType: keyof SearchFilters, value: string | undefined) => {
+  const handleFilterChange = (
+    filterType: keyof SearchFilters,
+    value: string | undefined
+  ) => {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
     updateUrlParams(searchQuery, newFilters);
@@ -95,28 +123,27 @@ const SearchPage = () => {
   const clearFilters = () => {
     const clearedFilters: SearchFilters = {};
     setFilters(clearedFilters);
-    if (searchQuery.trim()) {
-      updateUrlParams(searchQuery, clearedFilters);
-      performSearch(searchQuery, clearedFilters, 1, sortBy);
-    } else {
-      // If no query and clearing filters, reset to empty state (or browse all?)
-      // Let's reset to empty state if no query
-      setSearchParams(new URLSearchParams());
-      setSearchResponse(null);
-    }
+    // Always update URL and perform search, even if query is empty (Browse All behavior)
+    updateUrlParams(searchQuery, clearedFilters);
+    performSearch(searchQuery, clearedFilters, 1, sortBy);
   };
 
-  const hasActiveFilters = filters.artist || filters.period || filters.medium || filters.location || filters.style;
+  const hasActiveFilters =
+    filters.artist ||
+    filters.period ||
+    filters.medium ||
+    filters.location ||
+    filters.style;
 
   // Handle sort change
-  const handleSortChange = (newSort: 'title' | 'date') => {
+  const handleSortChange = (newSort: "title" | "date") => {
     setSortBy(newSort);
     // Update URL with sort param
     const params = new URLSearchParams(searchParams);
-    if (newSort === 'date') {
-      params.set('sort', 'date');
+    if (newSort === "date") {
+      params.set("sort", "date");
     } else {
-      params.delete('sort');
+      params.delete("sort");
     }
     setSearchParams(params);
     // Re-fetch with new sort order
@@ -166,28 +193,35 @@ const SearchPage = () => {
                 disabled={isSearching}
                 className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-gradient-to-r from-gold to-gold-dark px-6 py-2 font-medium text-charcoal shadow-md hover:shadow-lg transition-shadow disabled:opacity-50"
               >
-                {isSearching ? 'Searching...' : 'Search'}
+                {isSearching ? "Searching..." : "Search"}
               </button>
             </div>
           </form>
 
           {/* Quick Filters - Dynamic from facets (artwork styles) */}
-          {searchResponse?.facets?.styles && searchResponse.facets.styles.length > 0 && (
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {searchResponse.facets.styles.slice(0, 5).map((facet) => (
-                <button
-                  key={facet.name}
-                  onClick={() => handleFilterChange('style', filters.style === facet.name ? undefined : facet.name)}
-                  className={`cursor-pointer rounded-full border px-4 py-1 text-sm transition-colors ${filters.style === facet.name
-                    ? 'border-gold bg-gold/20 text-gold'
-                    : 'border-parchment/30 text-parchment/70 hover:border-gold hover:text-gold'
+          {searchResponse?.facets?.styles &&
+            searchResponse.facets.styles.length > 0 && (
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {searchResponse.facets.styles.slice(0, 5).map((facet) => (
+                  <button
+                    key={facet.name}
+                    onClick={() =>
+                      handleFilterChange(
+                        "style",
+                        filters.style === facet.name ? undefined : facet.name
+                      )
+                    }
+                    className={`cursor-pointer rounded-full border px-4 py-1 text-sm transition-colors ${
+                      filters.style === facet.name
+                        ? "border-gold bg-gold/20 text-gold"
+                        : "border-parchment/30 text-parchment/70 hover:border-gold hover:text-gold"
                     }`}
-                >
-                  {facet.name}
-                </button>
-              ))}
-            </div>
-          )}
+                  >
+                    {facet.name}
+                  </button>
+                ))}
+              </div>
+            )}
         </div>
       </div>
 
@@ -228,7 +262,9 @@ const SearchPage = () => {
             <div className="lg:col-span-1">
               <div className="sticky top-4 rounded-xl border border-bronze/20 bg-ivory p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-heading text-lg font-semibold text-charcoal">Filters</h3>
+                  <h3 className="font-heading text-lg font-semibold text-charcoal">
+                    Filters
+                  </h3>
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
@@ -240,92 +276,154 @@ const SearchPage = () => {
                 </div>
 
                 {/* Artist Filter */}
-                {searchResponse?.facets?.artists && searchResponse.facets.artists.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="mb-2 font-medium text-charcoal">Artist</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {searchResponse.facets.artists.map((facet) => (
-                        <label key={facet.name} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="artist"
-                            checked={filters.artist === facet.name}
-                            onChange={() => handleFilterChange('artist', filters.artist === facet.name ? undefined : facet.name)}
-                            className="text-gold focus:ring-gold"
-                          />
-                          <span className="text-sm text-charcoal-light flex-1 truncate">{facet.name}</span>
-                          <span className="text-xs text-bronze">({facet.count})</span>
-                        </label>
-                      ))}
+                {searchResponse?.facets?.artists &&
+                  searchResponse.facets.artists.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="mb-2 font-medium text-charcoal">Artist</h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {searchResponse.facets.artists.map((facet) => (
+                          <label
+                            key={facet.name}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="artist"
+                              checked={filters.artist === facet.name}
+                              onChange={() =>
+                                handleFilterChange(
+                                  "artist",
+                                  filters.artist === facet.name
+                                    ? undefined
+                                    : facet.name
+                                )
+                              }
+                              className="text-gold focus:ring-gold"
+                            />
+                            <span className="text-sm text-charcoal-light flex-1 truncate">
+                              {facet.name}
+                            </span>
+                            <span className="text-xs text-bronze">
+                              ({facet.count})
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Period Filter */}
-                {searchResponse?.facets?.periods && searchResponse.facets.periods.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="mb-2 font-medium text-charcoal">Period</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {searchResponse.facets.periods.map((facet) => (
-                        <label key={facet.name} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="period"
-                            checked={filters.period === facet.name}
-                            onChange={() => handleFilterChange('period', filters.period === facet.name ? undefined : facet.name)}
-                            className="text-gold focus:ring-gold"
-                          />
-                          <span className="text-sm text-charcoal-light flex-1 truncate">{facet.name}</span>
-                          <span className="text-xs text-bronze">({facet.count})</span>
-                        </label>
-                      ))}
+                {searchResponse?.facets?.periods &&
+                  searchResponse.facets.periods.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="mb-2 font-medium text-charcoal">Period</h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {searchResponse.facets.periods.map((facet) => (
+                          <label
+                            key={facet.name}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="period"
+                              checked={filters.period === facet.name}
+                              onChange={() =>
+                                handleFilterChange(
+                                  "period",
+                                  filters.period === facet.name
+                                    ? undefined
+                                    : facet.name
+                                )
+                              }
+                              className="text-gold focus:ring-gold"
+                            />
+                            <span className="text-sm text-charcoal-light flex-1 truncate">
+                              {facet.name}
+                            </span>
+                            <span className="text-xs text-bronze">
+                              ({facet.count})
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Medium Filter */}
-                {searchResponse?.facets?.media && searchResponse.facets.media.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="mb-2 font-medium text-charcoal">Medium</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {searchResponse.facets.media.map((facet) => (
-                        <label key={facet.name} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="medium"
-                            checked={filters.medium === facet.name}
-                            onChange={() => handleFilterChange('medium', filters.medium === facet.name ? undefined : facet.name)}
-                            className="text-gold focus:ring-gold"
-                          />
-                          <span className="text-sm text-charcoal-light flex-1 truncate">{facet.name}</span>
-                          <span className="text-xs text-bronze">({facet.count})</span>
-                        </label>
-                      ))}
+                {searchResponse?.facets?.media &&
+                  searchResponse.facets.media.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="mb-2 font-medium text-charcoal">Medium</h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {searchResponse.facets.media.map((facet) => (
+                          <label
+                            key={facet.name}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="medium"
+                              checked={filters.medium === facet.name}
+                              onChange={() =>
+                                handleFilterChange(
+                                  "medium",
+                                  filters.medium === facet.name
+                                    ? undefined
+                                    : facet.name
+                                )
+                              }
+                              className="text-gold focus:ring-gold"
+                            />
+                            <span className="text-sm text-charcoal-light flex-1 truncate">
+                              {facet.name}
+                            </span>
+                            <span className="text-xs text-bronze">
+                              ({facet.count})
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Location Filter */}
-                {searchResponse?.facets?.locations && searchResponse.facets.locations.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="mb-2 font-medium text-charcoal">Location</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {searchResponse.facets.locations.map((facet) => (
-                        <label key={facet.name} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="location"
-                            checked={filters.location === facet.name}
-                            onChange={() => handleFilterChange('location', filters.location === facet.name ? undefined : facet.name)}
-                            className="text-gold focus:ring-gold"
-                          />
-                          <span className="text-sm text-charcoal-light flex-1 truncate">{facet.name}</span>
-                          <span className="text-xs text-bronze">({facet.count})</span>
-                        </label>
-                      ))}
+                {searchResponse?.facets?.locations &&
+                  searchResponse.facets.locations.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="mb-2 font-medium text-charcoal">
+                        Location
+                      </h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {searchResponse.facets.locations.map((facet) => (
+                          <label
+                            key={facet.name}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="location"
+                              checked={filters.location === facet.name}
+                              onChange={() =>
+                                handleFilterChange(
+                                  "location",
+                                  filters.location === facet.name
+                                    ? undefined
+                                    : facet.name
+                                )
+                              }
+                              className="text-gold focus:ring-gold"
+                            />
+                            <span className="text-sm text-charcoal-light flex-1 truncate">
+                              {facet.name}
+                            </span>
+                            <span className="text-xs text-bronze">
+                              ({facet.count})
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             </div>
 
@@ -362,11 +460,17 @@ const SearchPage = () => {
                 <>
                   <div className="mb-8 flex items-center justify-between">
                     <p className="text-charcoal-light">
-                      Found <span className="font-medium text-charcoal">{searchResponse?.total}</span> artworks
+                      Found{" "}
+                      <span className="font-medium text-charcoal">
+                        {searchResponse?.total}
+                      </span>{" "}
+                      artworks
                     </p>
                     <select
                       value={sortBy}
-                      onChange={(e) => handleSortChange(e.target.value as 'title' | 'date')}
+                      onChange={(e) =>
+                        handleSortChange(e.target.value as "title" | "date")
+                      }
                       className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal focus:border-gold focus:outline-none"
                     >
                       <option value="title">Title A-Z</option>
@@ -391,8 +495,18 @@ const SearchPage = () => {
                             />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-bronze/50">
-                              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              <svg
+                                className="h-8 w-8"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={1}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
                               </svg>
                             </div>
                           )}
@@ -404,11 +518,17 @@ const SearchPage = () => {
                             {artwork.title}
                           </h3>
                           {artwork.artist && (
-                            <p className="mt-1 text-charcoal-light">{artwork.artist}</p>
+                            <p className="mt-1 text-charcoal-light">
+                              {artwork.artist}
+                            </p>
                           )}
                           <div className="mt-2 flex flex-wrap gap-4 text-sm text-bronze">
-                            {artwork.dateCreated && <span>{artwork.dateCreated}</span>}
-                            {artwork.dateCreated && artwork.medium && <span>•</span>}
+                            {artwork.dateCreated && (
+                              <span>{artwork.dateCreated}</span>
+                            )}
+                            {artwork.dateCreated && artwork.medium && (
+                              <span>•</span>
+                            )}
                             {artwork.medium && <span>{artwork.medium}</span>}
                           </div>
                           {artwork.period && (
@@ -460,7 +580,9 @@ const SearchPage = () => {
                               >
                                 1
                               </button>
-                              {page > 3 && <span className="px-2 text-bronze">...</span>}
+                              {page > 3 && (
+                                <span className="px-2 text-bronze">...</span>
+                              )}
                             </>
                           )}
 
@@ -492,7 +614,9 @@ const SearchPage = () => {
                           {/* Last page */}
                           {page < totalPages - 1 && (
                             <>
-                              {page < totalPages - 2 && <span className="px-2 text-bronze">...</span>}
+                              {page < totalPages - 2 && (
+                                <span className="px-2 text-bronze">...</span>
+                              )}
                               <button
                                 onClick={() => goToPage(totalPages)}
                                 className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
