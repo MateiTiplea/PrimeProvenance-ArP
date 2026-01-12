@@ -319,8 +319,6 @@ The complete source code is hosted on GitHub:
 *   **API Documentation**: [Swagger UI](http://localhost:8000/docs) *(runs locally)*
 *   **OpenAPI Spec**: [docs/openapi.yaml](docs/openapi.yaml)
 
-### Demo
-*   **Video Presentation**: [YouTube Link](#) *(coming soon)*
 
 ### Data Sources
 *   [CIMEC - Romanian Cultural Heritage](http://clasate.cimec.ro/)
