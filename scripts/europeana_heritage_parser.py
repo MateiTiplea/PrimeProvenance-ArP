@@ -14,6 +14,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -141,6 +142,93 @@ GETTY_AAT_MAPPINGS = {
     "cubist": "http://vocab.getty.edu/aat/300021495",
     "surrealism": "http://vocab.getty.edu/aat/300021515",
     "surrealist": "http://vocab.getty.edu/aat/300021515",
+    # Romanian terms
+    "portret": "http://vocab.getty.edu/aat/300015637",  # portrait
+    "peisaj": "http://vocab.getty.edu/aat/300015636",  # landscape
+    "natură moartă": "http://vocab.getty.edu/aat/300015638",  # still life
+    "natura moarta": "http://vocab.getty.edu/aat/300015638",  # still life (no diacritics)
+    "pictură": "http://vocab.getty.edu/aat/300177435",  # painting
+    "pictura": "http://vocab.getty.edu/aat/300177435",  # painting (no diacritics)
+    "tablou": "http://vocab.getty.edu/aat/300177435",  # painting/tableau
+    "ulei": "http://vocab.getty.edu/aat/300015050",  # oil
+    "ulei pe pânză": "http://vocab.getty.edu/aat/300015050",  # oil on canvas
+    "ulei pe panza": "http://vocab.getty.edu/aat/300015050",  # oil on canvas (no diacritics)
+    "sculptură": "http://vocab.getty.edu/aat/300047090",  # sculpture
+    "sculptura": "http://vocab.getty.edu/aat/300047090",  # sculpture (no diacritics)
+    "desen": "http://vocab.getty.edu/aat/300033973",  # drawing
+    "gravură": "http://vocab.getty.edu/aat/300041340",  # engraving
+    "gravura": "http://vocab.getty.edu/aat/300041340",  # engraving (no diacritics)
+    "acuarelă": "http://vocab.getty.edu/aat/300078925",  # watercolor
+    "acuarela": "http://vocab.getty.edu/aat/300078925",  # watercolor (no diacritics)
+    "icoană": "http://vocab.getty.edu/aat/300074603",  # icon
+    "icoana": "http://vocab.getty.edu/aat/300074603",  # icon (no diacritics)
+    "frescă": "http://vocab.getty.edu/aat/300177433",  # fresco
+    "fresca": "http://vocab.getty.edu/aat/300177433",  # fresco (no diacritics)
+    "mozaic": "http://vocab.getty.edu/aat/300015342",  # mosaic
+    "tapiserie": "http://vocab.getty.edu/aat/300205002",  # tapestry
+    "ceramică": "http://vocab.getty.edu/aat/300151343",  # ceramic
+    "ceramica": "http://vocab.getty.edu/aat/300151343",  # ceramic (no diacritics)
+    "lemn": "http://vocab.getty.edu/aat/300011914",  # wood
+    "bronz": "http://vocab.getty.edu/aat/300010957",  # bronze
+    "marmură": "http://vocab.getty.edu/aat/300011443",  # marble
+    "marmura": "http://vocab.getty.edu/aat/300011443",  # marble (no diacritics)
+    "hârtie": "http://vocab.getty.edu/aat/300014109",  # paper
+    "hartie": "http://vocab.getty.edu/aat/300014109",  # paper (no diacritics)
+    "pânză": "http://vocab.getty.edu/aat/300014078",  # canvas
+    "panza": "http://vocab.getty.edu/aat/300014078",  # canvas (no diacritics)
+    "panou": "http://vocab.getty.edu/aat/300014657",  # panel
+    "țăran": "http://vocab.getty.edu/aat/300025607",  # peasant (genre)
+    "taran": "http://vocab.getty.edu/aat/300025607",  # peasant (no diacritics)
+    "țărancă": "http://vocab.getty.edu/aat/300025607",  # peasant woman
+    "taranca": "http://vocab.getty.edu/aat/300025607",  # peasant woman (no diacritics)
+    "femeie": "http://vocab.getty.edu/aat/300189557",  # woman (subject)
+    "bărbat": "http://vocab.getty.edu/aat/300189559",  # man (subject)
+    "barbat": "http://vocab.getty.edu/aat/300189559",  # man (no diacritics)
+    "copil": "http://vocab.getty.edu/aat/300247598",  # child (subject)
+    "fetiță": "http://vocab.getty.edu/aat/300247589",  # girl
+    "fetita": "http://vocab.getty.edu/aat/300247589",  # girl (no diacritics)
+    "băiat": "http://vocab.getty.edu/aat/300247599",  # boy
+    "baiat": "http://vocab.getty.edu/aat/300247599",  # boy (no diacritics)
+    "călare": "http://vocab.getty.edu/aat/300264578",  # equestrian
+    "calare": "http://vocab.getty.edu/aat/300264578",  # equestrian (no diacritics)
+    "cal": "http://vocab.getty.edu/aat/300250125",  # horse
+    # Dutch terms
+    "schilderij": "http://vocab.getty.edu/aat/300177435",  # painting
+    "portret": "http://vocab.getty.edu/aat/300015637",  # portrait
+    "landschap": "http://vocab.getty.edu/aat/300015636",  # landscape
+    "stilleven": "http://vocab.getty.edu/aat/300015638",  # still life
+    "tekening": "http://vocab.getty.edu/aat/300033973",  # drawing
+    "prent": "http://vocab.getty.edu/aat/300041273",  # print
+    "paneel": "http://vocab.getty.edu/aat/300014657",  # panel
+    "doek": "http://vocab.getty.edu/aat/300014078",  # canvas
+    "olieverf": "http://vocab.getty.edu/aat/300015050",  # oil paint
+    "hout": "http://vocab.getty.edu/aat/300011914",  # wood
+    "papier": "http://vocab.getty.edu/aat/300014109",  # paper
+    # French terms
+    "peinture": "http://vocab.getty.edu/aat/300177435",  # painting
+    "tableau": "http://vocab.getty.edu/aat/300177435",  # painting
+    "dessin": "http://vocab.getty.edu/aat/300033973",  # drawing
+    "huile": "http://vocab.getty.edu/aat/300015050",  # oil
+    "huile sur toile": "http://vocab.getty.edu/aat/300015050",  # oil on canvas
+    "toile": "http://vocab.getty.edu/aat/300014078",  # canvas
+    "bois": "http://vocab.getty.edu/aat/300011914",  # wood
+    "paysage": "http://vocab.getty.edu/aat/300015636",  # landscape
+    "nature morte": "http://vocab.getty.edu/aat/300015638",  # still life
+    # German terms
+    "gemälde": "http://vocab.getty.edu/aat/300177435",  # painting
+    "ölgemälde": "http://vocab.getty.edu/aat/300177435",  # oil painting
+    "zeichnung": "http://vocab.getty.edu/aat/300033973",  # drawing
+    "öl": "http://vocab.getty.edu/aat/300015050",  # oil
+    "leinwand": "http://vocab.getty.edu/aat/300014078",  # canvas
+    "holz": "http://vocab.getty.edu/aat/300011914",  # wood
+    # Italian terms
+    "dipinto": "http://vocab.getty.edu/aat/300177435",  # painting
+    "pittura": "http://vocab.getty.edu/aat/300177435",  # painting
+    "ritratto": "http://vocab.getty.edu/aat/300015637",  # portrait
+    "paesaggio": "http://vocab.getty.edu/aat/300015636",  # landscape
+    "olio su tela": "http://vocab.getty.edu/aat/300015050",  # oil on canvas
+    "tela": "http://vocab.getty.edu/aat/300014078",  # canvas
+    "legno": "http://vocab.getty.edu/aat/300011914",  # wood
 }
 
 
@@ -244,6 +332,7 @@ class EuropeanaClient:
         self,
         query: str = "painting",
         provider: Optional[str] = None,
+        country: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
@@ -252,6 +341,7 @@ class EuropeanaClient:
         Args:
             query: Search query
             provider: Filter by data provider
+            country: Filter by country (e.g., 'Romania', 'Netherlands')
             limit: Maximum number of results (None for all)
 
         Returns:
@@ -264,11 +354,13 @@ class EuropeanaClient:
         # Build query filters for visual artworks with quality constraints
         qf = [
             "TYPE:IMAGE",
-            "contentTier:(2 OR 3 OR 4)",  # Higher quality content tiers
+            "contentTier:(3 OR 4)",  # Higher quality content tiers
             "MEDIA:true",  # Must have media
         ]
         if provider:
             qf.append(f'DATA_PROVIDER:"{provider}"')
+        if country:
+            qf.append(f'COUNTRY:"{country}"')
 
         while True:
             print(f"  Fetching records {start} to {start + rows_per_page - 1}...")
@@ -333,32 +425,80 @@ class EuropeanaParser:
             title = EuropeanaParser._clean_title(title)
 
         # Extract creator/artist - try multiple fields
-        creator = EuropeanaParser._get_lang_value(item.get("dcCreatorLangAware", {}))
+        creator_concepts = []
+        creator = EuropeanaParser._get_lang_value(
+            item.get("dcCreatorLangAware", {}), ignore_urls=True
+        )
+        creator_concepts.extend(
+            EuropeanaParser._get_concept_uris(item.get("dcCreatorLangAware", {}))
+        )
+
         if not creator:
             creators = item.get("dcCreator", [])
+            # Filter URLs from list
+            creators = [
+                c for c in creators if not (isinstance(c, str) and c.startswith("http"))
+            ]
             creator = creators[0] if creators else None
+
         if not creator:
             # Try edmAgentLabelLangAware (Europeana agent labels)
             creator = EuropeanaParser._get_lang_value(
-                item.get("edmAgentLabelLangAware", {})
+                item.get("edmAgentLabelLangAware", {}), ignore_urls=True
             )
         if not creator:
             # Try dcContributorLangAware
             creator = EuropeanaParser._get_lang_value(
-                item.get("dcContributorLangAware", {})
+                item.get("dcContributorLangAware", {}), ignore_urls=True
             )
+            creator_concepts.extend(
+                EuropeanaParser._get_concept_uris(
+                    item.get("dcContributorLangAware", {})
+                )
+            )
+
         if not creator:
             creators = item.get("dcContributor", [])
+            creators = [
+                c for c in creators if not (isinstance(c, str) and c.startswith("http"))
+            ]
             creator = creators[0] if creators else None
 
         # Extract date
         years = item.get("year", [])
         date_created = years[0] if years else None
 
-        # Extract description
-        description = EuropeanaParser._get_lang_value(
+        # Extract description - prefer English, fallback to original language with proper tag
+        description, description_lang = EuropeanaParser._get_lang_value_with_lang(
+            item.get("dcDescriptionLangAware", {}),
+            strict_english=False,
+            ignore_urls=True,
+        )
+
+        # Extract description concepts (often subject/style)
+        description_concepts = EuropeanaParser._get_concept_uris(
             item.get("dcDescriptionLangAware", {})
         )
+
+        # Extract dimensions from various fields
+        dimensions = None
+        # Try dctermsExtent (common for Rijksmuseum)
+        extent_values = item.get("dctermsExtent", [])
+        if extent_values:
+            dimensions = (
+                extent_values[0] if isinstance(extent_values, list) else extent_values
+            )
+        # Try dcFormat which sometimes contains dimensions
+        if not dimensions:
+            format_values = item.get("dcFormat", [])
+            if format_values:
+                for fmt in format_values:
+                    # Look for dimension patterns like "100 x 80 cm" or "h 45cm × w 30cm"
+                    if fmt and re.search(
+                        r"\d+\s*[x×]\s*\d+|\d+\s*(cm|mm|in)", fmt, re.I
+                    ):
+                        dimensions = fmt
+                        break
 
         # Extract image URL
         image_url = None
@@ -374,14 +514,42 @@ class EuropeanaParser:
         providers = item.get("dataProvider", [])
         repository = providers[0] if providers else None
 
-        # Extract type/medium
+        # Extract high-level type (e.g. IMAGE)
         types = item.get("type", [])
         obj_type = types[0] if isinstance(types, list) and types else types
 
-        dc_type = EuropeanaParser._get_lang_value(item.get("dcTypeLangAware", {}))
-        dc_format = EuropeanaParser._get_lang_value(item.get("dcFormatLangAware", {}))
+        # Extract type/medium - ensure we get text, not URLs
+        media_concepts = []  # URIs for medium/format
+
+        dc_type = EuropeanaParser._get_lang_value(
+            item.get("dcTypeLangAware", {}), ignore_urls=True
+        )
+        media_concepts.extend(
+            EuropeanaParser._get_concept_uris(item.get("dcTypeLangAware", {}))
+        )
+
+        dc_format = EuropeanaParser._get_lang_value(
+            item.get("dcFormatLangAware", {}), ignore_urls=True
+        )
+        media_concepts.extend(
+            EuropeanaParser._get_concept_uris(item.get("dcFormatLangAware", {}))
+        )
 
         medium = dc_format or dc_type
+
+        # Also check simple lists for medium if LangAware failed (ignoring URLs)
+        if not medium:
+            types = item.get("type", [])
+            types = [
+                t for t in types if not (isinstance(t, str) and t.startswith("http"))
+            ]
+            if types:
+                medium = types[0]
+
+        # Extract edmConcept URIs
+        edm_concepts = item.get("edmConcept", [])
+        if edm_concepts:
+            media_concepts.extend(edm_concepts)
 
         # Extract country
         countries = item.get("country", [])
@@ -399,6 +567,10 @@ class EuropeanaParser:
             if guid:
                 record_url = guid
 
+        # Extract time span data for richer provenance
+        time_spans = item.get("edmTimespan", [])
+        time_span_labels = item.get("edmTimespanLabel", [])
+
         return {
             "id": artwork_id,
             "europeana_id": record_id,
@@ -406,6 +578,7 @@ class EuropeanaParser:
             "title_lang": "en",
             "object_type": obj_type,
             "description": description,
+            "description_lang": description_lang,
             "materials_technique": {"material": medium, "technique": None},
             "creator": EuropeanaParser._clean_creator_name(creator),
             "creation_date": date_created,
@@ -414,12 +587,370 @@ class EuropeanaParser:
             "image_url": image_url,
             "record_url": record_url,
             "license": license_url,
-            "dimensions": None,
+            "dimensions": dimensions,
+            "time_spans": time_spans,
+            "time_span_labels": time_span_labels,
+            "description_concepts": description_concepts,
+            "media_concepts": media_concepts,
+            "creator_concepts": creator_concepts,
         }
 
     @staticmethod
+    def parse_full_record(
+        record: Dict[str, Any], existing_artwork: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Parse a full EDM record and merge with existing artwork data.
+
+        This extracts additional metadata from the Record API that isn't
+        available in the Search API, such as provenance and detailed dimensions.
+
+        Args:
+            record: Full EDM record from Record API
+            existing_artwork: Artwork dict from parse_search_item
+
+        Returns:
+            Updated artwork dictionary with additional fields
+        """
+        artwork = existing_artwork.copy()
+
+        if not record:
+            return artwork
+
+        # Get proxies (contains most metadata)
+        proxies = record.get("proxies", [])
+        provider_proxy = None
+        europeana_proxy = None
+
+        for proxy in proxies:
+            if proxy.get("europeanaProxy"):
+                europeana_proxy = proxy
+            else:
+                provider_proxy = proxy
+
+        # Use provider proxy primarily (original metadata), fallback to europeana proxy
+        main_proxy = provider_proxy or europeana_proxy or {}
+
+        # Extract provenance (dcterms:provenance)
+        provenance_data = main_proxy.get("dctermsProvenance", {})
+        if provenance_data:
+            provenance_text = EuropeanaParser._extract_edm_value(
+                provenance_data, prefer_english=True
+            )
+            if provenance_text:
+                artwork["provenance_text"] = provenance_text
+
+        # Extract dimensions from dcterms:extent
+        # Europeana often provides height and width as separate entries like:
+        # "height 94.5 cm", "width 162 cm"
+        extent_data = main_proxy.get("dctermsExtent", {})
+        if extent_data and not artwork.get("dimensions"):
+            # Get all extent values
+            extent_values = EuropeanaParser._extract_edm_all_values(extent_data)
+
+            height = None
+            width = None
+
+            for val in extent_values:
+                if not val:
+                    continue
+                val_lower = val.lower()
+
+                # Match patterns like "height 94.5 cm" or "h 94,5 cm" or "hoogte 94,5 cm"
+                height_match = re.search(
+                    r"(?:height|h|hoogte|drager hoogte)\s*[:\s]*(\d+[,.]?\d*)\s*(cm|mm|m\b|in)?",
+                    val_lower,
+                )
+                if height_match:
+                    h = height_match.group(1).replace(",", ".")
+                    height = float(h)
+                    continue
+
+                # Match patterns like "width 162 cm" or "w 162 cm" or "breedte 162 cm"
+                width_match = re.search(
+                    r"(?:width|w|breedte|drager breedte)\s*[:\s]*(\d+[,.]?\d*)\s*(cm|mm|m\b|in)?",
+                    val_lower,
+                )
+                if width_match:
+                    w = width_match.group(1).replace(",", ".")
+                    width = float(w)
+                    continue
+
+                # Also try generic dimension pattern like "94.5 x 162 cm"
+                combined_match = re.search(
+                    r"(\d+[,.]?\d*)\s*[x×]\s*(\d+[,.]?\d*)\s*(cm|mm|m\b|in)?", val_lower
+                )
+                if combined_match:
+                    height = float(combined_match.group(1).replace(",", "."))
+                    width = float(combined_match.group(2).replace(",", "."))
+                    break
+
+            if height is not None and width is not None:
+                # Format: height × width cm
+                h_str = f"{height:.1f}" if height != int(height) else str(int(height))
+                w_str = f"{width:.1f}" if width != int(width) else str(int(width))
+                artwork["dimensions"] = f"{h_str} × {w_str} cm"
+            elif height is not None:
+                h_str = f"{height:.1f}" if height != int(height) else str(int(height))
+                artwork["dimensions"] = f"h: {h_str} cm"
+            elif width is not None:
+                w_str = f"{width:.1f}" if width != int(width) else str(int(width))
+                artwork["dimensions"] = f"w: {w_str} cm"
+
+        # Also try dcFormat for dimensions/materials
+        format_data = main_proxy.get("dcFormat", {})
+        if format_data:
+            format_values = EuropeanaParser._extract_edm_all_values(format_data)
+            for fmt in format_values:
+                # Check if it looks like dimension info
+                if fmt and re.search(
+                    r"\d+\s*[x×]\s*\d+|\d+\s*(cm|mm|m\b|in)", fmt, re.I
+                ):
+                    if not artwork.get("dimensions"):
+                        artwork["dimensions"] = fmt
+                # Check if it's material/technique info
+                elif fmt and not artwork.get("materials_technique", {}).get(
+                    "technique"
+                ):
+                    if any(
+                        kw in fmt.lower()
+                        for kw in [
+                            "oil",
+                            "canvas",
+                            "panel",
+                            "paper",
+                            "wood",
+                            "tempera",
+                            "watercolor",
+                            "gouache",
+                        ]
+                    ):
+                        if artwork.get("materials_technique"):
+                            artwork["materials_technique"]["technique"] = fmt
+                        else:
+                            artwork["materials_technique"] = {
+                                "material": fmt,
+                                "technique": None,
+                            }
+
+        # Extract better description if available (prefer English)
+        desc_data = main_proxy.get("dcDescription", {})
+        if desc_data:
+            desc, desc_lang = EuropeanaParser._extract_edm_value_with_lang(
+                desc_data, prefer_english=True
+            )
+            # Only replace if we found an English description and current isn't English
+            if desc and desc_lang == "en" and artwork.get("description_lang") != "en":
+                artwork["description"] = desc
+                artwork["description_lang"] = "en"
+            # Or if we have no description at all
+            elif desc and not artwork.get("description"):
+                artwork["description"] = desc
+                artwork["description_lang"] = desc_lang
+
+        # Extract dcterms:medium for materials
+        medium_data = main_proxy.get("dctermsMedium", {})
+        if medium_data:
+            medium = EuropeanaParser._extract_edm_value(
+                medium_data, prefer_english=True
+            )
+            if medium and artwork.get("materials_technique"):
+                if not artwork["materials_technique"].get("material"):
+                    artwork["materials_technique"]["material"] = medium
+
+        # Extract dc:subject for style/genre hints
+        subject_data = main_proxy.get("dcSubject", {})
+        if subject_data:
+            subjects = EuropeanaParser._extract_edm_all_values(subject_data)
+            if subjects:
+                artwork["subjects"] = subjects
+
+        # Extract dcterms:created for more precise dates
+        created_data = main_proxy.get("dctermsCreated", {})
+        if created_data and not artwork.get("creation_date"):
+            created = EuropeanaParser._extract_edm_value(created_data)
+            if created:
+                artwork["creation_date"] = created
+
+        # Extract acquisition/collection info from dcterms:isPartOf
+        part_of_data = main_proxy.get("dctermsIsPartOf", {})
+        if part_of_data:
+            collection = EuropeanaParser._extract_edm_value(
+                part_of_data, prefer_english=True
+            )
+            if collection:
+                artwork["collection"] = collection
+
+        # Get aggregations for additional links
+        aggregations = record.get("aggregations", [])
+        if aggregations:
+            agg = aggregations[0]
+            # Higher quality image
+            if not artwork.get("image_url"):
+                artwork["image_url"] = agg.get("edmIsShownBy") or agg.get("edmObject")
+            # Original record URL
+            if not artwork.get("record_url"):
+                artwork["record_url"] = agg.get("edmIsShownAt")
+
+        # Extract Getty AAT URIs from concepts
+        getty_aat_uris = set()
+        concepts = record.get("concepts", [])
+        for concept in concepts:
+            # Check the concept's about URI
+            about = concept.get("about", "")
+            if "vocab.getty.edu/aat" in about:
+                getty_aat_uris.add(about)
+
+            # Also check exactMatch for Getty AAT links
+            exact_matches = concept.get("exactMatch", [])
+            for match in exact_matches:
+                if isinstance(match, str) and "vocab.getty.edu/aat" in match:
+                    getty_aat_uris.add(match)
+
+        if getty_aat_uris:
+            artwork["getty_aat_from_europeana"] = list(getty_aat_uris)
+
+        # Extract artist Wikidata and DBpedia links from agents
+        agents = record.get("agents", [])
+        for agent in agents:
+            owl_same_as = agent.get("owlSameAs", [])
+            artist_wikidata = None
+            artist_dbpedia = None
+
+            for link in owl_same_as:
+                if isinstance(link, str):
+                    if "wikidata.org" in link:
+                        artist_wikidata = link
+                    elif "dbpedia.org" in link:
+                        artist_dbpedia = link
+
+            # Store if found - first agent is typically the creator
+            if artist_wikidata or artist_dbpedia:
+                if not artwork.get("artist_wikidata_from_europeana"):
+                    artwork["artist_wikidata_from_europeana"] = artist_wikidata
+                if not artwork.get("artist_dbpedia_from_europeana"):
+                    artwork["artist_dbpedia_from_europeana"] = artist_dbpedia
+
+                # Also get artist name from agent
+                pref_label = agent.get("prefLabel", {})
+                artist_name = EuropeanaParser._extract_edm_value(
+                    pref_label, prefer_english=True
+                )
+                if artist_name and not artwork.get("artist_name_resolved"):
+                    artwork["artist_name_resolved"] = artist_name
+
+        return artwork
+
+    @staticmethod
+    def _extract_edm_value(data: Any, prefer_english: bool = False) -> Optional[str]:
+        """Extract a single value from EDM field (handles various formats)."""
+        if not data:
+            return None
+
+        # If it's a simple string
+        if isinstance(data, str):
+            return data
+
+        # If it's a list
+        if isinstance(data, list):
+            if not data:
+                return None
+            # Try to find English value first
+            if prefer_english:
+                for item in data:
+                    if isinstance(item, dict) and item.get("@language") == "en":
+                        return item.get("@value")
+            # Return first value
+            first = data[0]
+            if isinstance(first, dict):
+                return first.get("@value") or first.get("def", [None])[0]
+            return str(first) if first else None
+
+        # If it's a dict with language keys
+        if isinstance(data, dict):
+            # Try English first
+            if prefer_english and "en" in data:
+                vals = data["en"]
+                return vals[0] if isinstance(vals, list) else vals
+            # Try def (default)
+            if "def" in data:
+                vals = data["def"]
+                return vals[0] if isinstance(vals, list) else vals
+            # Return any value
+            for vals in data.values():
+                if vals:
+                    return vals[0] if isinstance(vals, list) else vals
+
+        return None
+
+    @staticmethod
+    def _extract_edm_value_with_lang(data: Any, prefer_english: bool = False) -> tuple:
+        """Extract value and language from EDM field."""
+        if not data:
+            return None, None
+
+        if isinstance(data, str):
+            return data, "en"  # Assume English for plain strings
+
+        if isinstance(data, list):
+            if not data:
+                return None, None
+            if prefer_english:
+                for item in data:
+                    if isinstance(item, dict) and item.get("@language") == "en":
+                        return item.get("@value"), "en"
+            first = data[0]
+            if isinstance(first, dict):
+                return first.get("@value"), first.get("@language", "en")
+            return str(first) if first else None, "en"
+
+        if isinstance(data, dict):
+            if prefer_english and "en" in data:
+                vals = data["en"]
+                val = vals[0] if isinstance(vals, list) else vals
+                return val, "en"
+            for lang, vals in data.items():
+                if vals:
+                    val = vals[0] if isinstance(vals, list) else vals
+                    return val, lang
+
+        return None, None
+
+    @staticmethod
+    def _extract_edm_all_values(data: Any) -> List[str]:
+        """Extract all values from EDM field."""
+        values = []
+
+        if not data:
+            return values
+
+        if isinstance(data, str):
+            return [data]
+
+        if isinstance(data, list):
+            for item in data:
+                if isinstance(item, dict):
+                    val = item.get("@value")
+                    if val:
+                        values.append(val)
+                elif item:
+                    values.append(str(item))
+            return values
+
+        if isinstance(data, dict):
+            for lang_vals in data.values():
+                if isinstance(lang_vals, list):
+                    values.extend([v for v in lang_vals if v])
+                elif lang_vals:
+                    values.append(lang_vals)
+
+        return values
+
+    @staticmethod
     def _get_lang_value(
-        lang_dict: Dict[str, List[str]], preferred_langs: List[str] = None
+        lang_dict: Dict[str, List[str]],
+        preferred_langs: List[str] = None,
+        ignore_urls: bool = False,
     ) -> Optional[str]:
         """
         Extract value from language-aware field, preferring certain languages.
@@ -427,29 +958,90 @@ class EuropeanaParser:
         Args:
             lang_dict: Dictionary with language codes as keys
             preferred_langs: List of preferred language codes
+            ignore_urls: If True, skip values that look like URLs
 
         Returns:
             Best matching value or None
         """
+        value, _ = EuropeanaParser._get_lang_value_with_lang(
+            lang_dict, preferred_langs, ignore_urls=ignore_urls
+        )
+        return value
+
+    @staticmethod
+    def _get_lang_value_with_lang(
+        lang_dict: Dict[str, List[str]],
+        preferred_langs: List[str] = None,
+        strict_english: bool = False,
+        ignore_urls: bool = False,
+    ) -> tuple:
+        """
+        Extract value from language-aware field with language tracking.
+
+        Args:
+            lang_dict: Dictionary with language codes as keys
+            preferred_langs: List of preferred language codes
+            strict_english: If True, only return English content, else None
+            ignore_urls: If True, skip values that look like URLs
+
+        Returns:
+            Tuple of (value, language) or (None, None)
+        """
         if not lang_dict:
-            return None
+            return None, None
 
         if preferred_langs is None:
             preferred_langs = ["en", "def", ""]
+
+        def is_url(v):
+            return isinstance(v, str) and (
+                v.startswith("http://") or v.startswith("https://")
+            )
 
         # Try preferred languages first
         for lang in preferred_langs:
             if lang in lang_dict:
                 values = lang_dict[lang]
                 if values:
-                    return values[0] if isinstance(values, list) else values
+                    # Iterate values to find one that satisfies ignore_urls
+                    candidates = values if isinstance(values, list) else [values]
+                    for val in candidates:
+                        if ignore_urls and is_url(val):
+                            continue
+                        return val, lang if lang else "en"
+
+        # If strict English mode, don't fall back to other languages
+        if strict_english:
+            return None, None
 
         # Fallback to any available language
-        for values in lang_dict.values():
+        for lang, values in lang_dict.items():
             if values:
-                return values[0] if isinstance(values, list) else values
+                candidates = values if isinstance(values, list) else [values]
+                for val in candidates:
+                    if ignore_urls and is_url(val):
+                        continue
+                    return val, lang
 
-        return None
+        return None, None
+
+    @staticmethod
+    def _get_concept_uris(lang_dict: Dict[str, List[str]]) -> List[str]:
+        """Extract concept URIs (starting with http) from language-aware field."""
+        uris = set()
+        if not lang_dict:
+            return []
+
+        for values in lang_dict.values():
+            if not values:
+                continue
+            candidates = values if isinstance(values, list) else [values]
+            for val in candidates:
+                if isinstance(val, str) and (
+                    val.startswith("http://") or val.startswith("https://")
+                ):
+                    uris.add(val)
+        return list(uris)
 
     @staticmethod
     def _create_id_from_europeana(europeana_id: str) -> str:
@@ -637,7 +1229,7 @@ class DataEnricher:
         if cache_key in self._artwork_cache:
             return self._artwork_cache[cache_key]
 
-        result = {"wikidata_uri": None, "dbpedia_uri": None}
+        result = {"wikidata_uri": None, "dbpedia_uri": None, "dimensions": None}
 
         normalized_artist = (
             self._normalize_artist_name(artist_name) if artist_name else None
@@ -743,7 +1335,12 @@ class DataEnricher:
             }
 
             time.sleep(self._query_delay)
-            response = requests.get(search_url, params=params, timeout=5)
+            headers = {
+                "User-Agent": "EuropeanaHeritageParser/1.0 (ArP Project; https://github.com/example/arp)"
+            }
+            response = requests.get(
+                search_url, params=params, headers=headers, timeout=5
+            )
             response.raise_for_status()
             data = response.json()
 
@@ -826,7 +1423,12 @@ class DataEnricher:
             }
 
             time.sleep(self._query_delay)
-            response = requests.get(search_url, params=params, timeout=5)
+            headers = {
+                "User-Agent": "EuropeanaHeritageParser/1.0 (ArP Project; https://github.com/example/arp)"
+            }
+            response = requests.get(
+                search_url, params=params, headers=headers, timeout=5
+            )
             response.raise_for_status()
             data = response.json()
 
@@ -834,7 +1436,9 @@ class DataEnricher:
             if not search_results:
                 # Try Dutch language search for Rijksmuseum artworks
                 params["language"] = "nl"
-                response = requests.get(search_url, params=params, timeout=5)
+                response = requests.get(
+                    search_url, params=params, headers=headers, timeout=5
+                )
                 response.raise_for_status()
                 data = response.json()
                 search_results = data.get("search", [])
@@ -850,14 +1454,31 @@ class DataEnricher:
                 if not entity_id:
                     continue
 
-                # Quick check if it's an artwork type
-                query = f"""
-                SELECT ?type WHERE {{
-                  wd:{entity_id} wdt:P31 ?type .
-                  VALUES ?type {{ wd:Q3305213 wd:Q4502142 wd:Q838948 wd:Q18573970 wd:Q93184 }}
-                }}
-                LIMIT 1
-                """
+                # Verify it's an artwork type AND has matching creator
+                # P31 = instance of, P170 = creator
+                # artwork types: Q3305213 (painting), Q4502142 (visual artwork),
+                #                Q838948 (work of art), Q18573970 (pictorial artwork), Q93184 (drawing)
+                if artist_name:
+                    # Query with artist verification
+                    normalized_artist = self._normalize_artist_name(artist_name).lower()
+                    query = f"""
+                    SELECT ?type ?creatorLabel WHERE {{
+                      wd:{entity_id} wdt:P31 ?type .
+                      VALUES ?type {{ wd:Q3305213 wd:Q4502142 wd:Q838948 wd:Q18573970 wd:Q93184 }}
+                      OPTIONAL {{ wd:{entity_id} wdt:P170 ?creator . }}
+                      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+                    }}
+                    LIMIT 5
+                    """
+                else:
+                    # No artist to verify, just check artwork type
+                    query = f"""
+                    SELECT ?type WHERE {{
+                      wd:{entity_id} wdt:P31 ?type .
+                      VALUES ?type {{ wd:Q3305213 wd:Q4502142 wd:Q838948 wd:Q18573970 wd:Q93184 }}
+                    }}
+                    LIMIT 1
+                    """
 
                 sparql = SPARQLWrapper(WIKIDATA_ENDPOINT)
                 sparql.setQuery(query)
@@ -872,17 +1493,129 @@ class DataEnricher:
                 bindings = results.get("results", {}).get("bindings", [])
 
                 if bindings:
-                    result["wikidata_uri"] = (
-                        f"http://www.wikidata.org/entity/{entity_id}"
-                    )
-                    return result
+                    # If we have an artist to verify, check if creator matches
+                    if artist_name:
+                        creator_found = False
+                        for binding in bindings:
+                            creator_label = (
+                                binding.get("creatorLabel", {}).get("value", "").lower()
+                            )
+                            if creator_label and (
+                                normalized_artist in creator_label
+                                or creator_label in normalized_artist
+                                or
+                                # Handle last name match for "Surname, FirstName" format
+                                any(
+                                    part in creator_label
+                                    for part in normalized_artist.split()
+                                    if len(part) > 3
+                                )
+                            ):
+                                creator_found = True
+                                break
 
-            self._log_warning(f"Wikidata: No artwork found for '{title[:40]}...'")
+                        if creator_found:
+                            result["wikidata_uri"] = (
+                                f"http://www.wikidata.org/entity/{entity_id}"
+                            )
+                            # Fetch dimensions for this artwork
+                            result["dimensions"] = self._fetch_wikidata_dimensions(
+                                entity_id
+                            )
+                            return result
+                        else:
+                            # Artist doesn't match, continue searching
+                            continue
+                    else:
+                        # No artist to verify, accept the match
+                        result["wikidata_uri"] = (
+                            f"http://www.wikidata.org/entity/{entity_id}"
+                        )
+                        # Fetch dimensions for this artwork
+                        result["dimensions"] = self._fetch_wikidata_dimensions(
+                            entity_id
+                        )
+                        return result
+
+            self._log_warning(
+                f"Wikidata: No artwork found for '{title[:40]}...' by '{artist_name or 'unknown'}'"
+            )
 
         except Exception as e:
             self._log_warning(f"Wikidata artwork query failed for '{title[:40]}': {e}")
 
         return result
+
+    def _fetch_wikidata_dimensions(self, entity_id: str) -> Optional[str]:
+        """Fetch dimensions for an artwork from Wikidata.
+
+        Uses P2048 (height) and P2049 (width) properties.
+
+        Args:
+            entity_id: Wikidata entity ID (e.g., "Q12345")
+
+        Returns:
+            Formatted dimensions string like "123 × 456 cm" or None
+        """
+        try:
+            # P2048 = height, P2049 = width - use simple direct property access
+            query = f"""
+            SELECT ?height ?width WHERE {{
+              OPTIONAL {{ wd:{entity_id} wdt:P2048 ?height . }}
+              OPTIONAL {{ wd:{entity_id} wdt:P2049 ?width . }}
+            }}
+            LIMIT 1
+            """
+
+            sparql = SPARQLWrapper(WIKIDATA_ENDPOINT)
+            sparql.setQuery(query)
+            sparql.setReturnFormat(JSON)
+            sparql.setTimeout(5)
+            sparql.addCustomHttpHeader(
+                "User-Agent", "EuropeanaHeritageParser/1.0 (ArP Project)"
+            )
+
+            time.sleep(0.2)
+            results = sparql.query().convert()
+            bindings = results.get("results", {}).get("bindings", [])
+
+            if bindings:
+                binding = bindings[0]
+                height = binding.get("height", {}).get("value")
+                width = binding.get("width", {}).get("value")
+
+                if height or width:
+                    # Format dimensions - height x width
+                    height_str = None
+                    width_str = None
+
+                    if height:
+                        try:
+                            h = float(height)
+                            height_str = f"{h:.1f}" if h != int(h) else str(int(h))
+                        except ValueError:
+                            height_str = height
+
+                    if width:
+                        try:
+                            w = float(width)
+                            width_str = f"{w:.1f}" if w != int(w) else str(int(w))
+                        except ValueError:
+                            width_str = width
+
+                    if height_str and width_str:
+                        return f"{height_str} × {width_str} cm"
+                    elif height_str:
+                        return f"h: {height_str} cm"
+                    elif width_str:
+                        return f"w: {width_str} cm"
+
+        except Exception as e:
+            self._log_warning(
+                f"Failed to fetch Wikidata dimensions for {entity_id}: {e}"
+            )
+
+        return None
 
     def _query_dbpedia_artist(self, artist_name: str) -> Dict[str, Any]:
         """Query DBpedia for artist information."""
@@ -950,31 +1683,37 @@ class DataEnricher:
     def _query_dbpedia_artwork(
         self, title: str, artist_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Query DBpedia for artwork information."""
+        """Query DBpedia for artwork information with artist verification."""
         result = {"dbpedia_uri": None}
 
         safe_title = title.replace('"', '\\"').replace("'", "\\'")
 
-        artist_filter = ""
+        # Build artist constraint - REQUIRE match if artist name provided
+        artist_clause = ""
         if artist_name:
-            safe_artist = artist_name.replace('"', '\\"').replace("'", "\\'")
-            artist_filter = f"""
-          OPTIONAL {{ ?artwork dbo:author ?author . ?author rdfs:label ?authorLabel . FILTER(LANG(?authorLabel) = "en") }}
-          FILTER(!BOUND(?author) || CONTAINS(LCASE(?authorLabel), LCASE("{safe_artist}")))
+            normalized_artist = self._normalize_artist_name(artist_name)
+            safe_artist = normalized_artist.replace('"', '\\"').replace("'", "\\'")
+
+            artist_clause = f"""
+          ?artwork dbo:author ?author .
+          ?author rdfs:label ?authorLabel .
+          FILTER(LANG(?authorLabel) = "en")
+          FILTER(CONTAINS(LCASE(?authorLabel), LCASE("{safe_artist}")) || 
+                 CONTAINS(LCASE("{safe_artist}"), LCASE(?authorLabel)))
             """
 
         query = f"""
         PREFIX dbo: <http://dbpedia.org/ontology/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         
-        SELECT ?artwork WHERE {{
+        SELECT ?artwork ?authorLabel WHERE {{
           ?artwork a dbo:Artwork .
           ?artwork rdfs:label ?label .
           FILTER(LANG(?label) = "en")
           FILTER(CONTAINS(LCASE(?label), LCASE("{safe_title}")))
-          {artist_filter}
+          {artist_clause}
         }}
-        LIMIT 1
+        LIMIT 5
         """
 
         try:
@@ -989,7 +1728,31 @@ class DataEnricher:
             bindings = results.get("results", {}).get("bindings", [])
 
             if bindings:
-                result["dbpedia_uri"] = bindings[0].get("artwork", {}).get("value")
+                # If we have artist name, verify match
+                if artist_name:
+                    normalized_artist = self._normalize_artist_name(artist_name).lower()
+                    for binding in bindings:
+                        author_label = (
+                            binding.get("authorLabel", {}).get("value", "").lower()
+                        )
+                        if author_label and (
+                            normalized_artist in author_label
+                            or author_label in normalized_artist
+                            or any(
+                                part in author_label
+                                for part in normalized_artist.split()
+                                if len(part) > 3
+                            )
+                        ):
+                            result["dbpedia_uri"] = binding.get("artwork", {}).get(
+                                "value"
+                            )
+                            return result
+                    self._log_warning(
+                        f"DBpedia: No artwork found for '{title[:40]}...' by '{artist_name}'"
+                    )
+                else:
+                    result["dbpedia_uri"] = bindings[0].get("artwork", {}).get("value")
             else:
                 self._log_warning(f"DBpedia: No artwork found for '{title[:40]}...'")
 
@@ -1090,13 +1853,14 @@ class RDFGenerator:
                 )
             )
 
-        # Description
+        # Description - use tracked language
         if artwork.get("description"):
+            desc_lang = artwork.get("description_lang", "en") or "en"
             self.graph.add(
                 (
                     artwork_uri,
                     DC.description,
-                    Literal(artwork["description"], lang="en"),
+                    Literal(artwork["description"], lang=desc_lang),
                 )
             )
 
@@ -1124,10 +1888,27 @@ class RDFGenerator:
             if isinstance(obj_type_str, str):
                 self.graph.add((artwork_uri, ARP.artworkStyle, Literal(obj_type_str)))
 
-        # Getty AAT links
-        for aat_uri in getty_aat_uris:
-            self.graph.add((artwork_uri, SCHEMA.artMedium, URIRef(aat_uri)))
-            self.graph.add((artwork_uri, DCTERMS.type, URIRef(aat_uri)))
+        # Getty AAT links and other medium/type concepts
+        # Combine mapped Getty URIs with extracted concepts
+        all_media_uris = set(getty_aat_uris)
+        if artwork.get("media_concepts"):
+            all_media_uris.update(artwork["media_concepts"])
+
+        for uri in all_media_uris:
+            self.graph.add((artwork_uri, SCHEMA.artMedium, URIRef(uri)))
+            self.graph.add((artwork_uri, DCTERMS.type, URIRef(uri)))
+            self.graph.add((artwork_uri, DCTERMS.medium, URIRef(uri)))
+
+        # Description concepts (often Subject/Topic)
+        if artwork.get("description_concepts"):
+            for uri in artwork["description_concepts"]:
+                self.graph.add((artwork_uri, DC.subject, URIRef(uri)))
+                self.graph.add((artwork_uri, DCTERMS.subject, URIRef(uri)))
+
+        # Creator concepts (as contributors)
+        if artwork.get("creator_concepts"):
+            for uri in artwork["creator_concepts"]:
+                self.graph.add((artwork_uri, DCTERMS.contributor, URIRef(uri)))
 
         # Artwork external links
         if artwork_enrichment.get("wikidata_uri"):
@@ -1272,7 +2053,7 @@ class RDFGenerator:
     def _add_provenance_chain(
         self, artwork: Dict[str, Any], artwork_uri: URIRef
     ) -> List[URIRef]:
-        """Build a basic provenance chain for the artwork."""
+        """Build a provenance chain for the artwork with richer data."""
         events = []
         event_order = 1
 
@@ -1289,10 +2070,14 @@ class RDFGenerator:
         )
         self.graph.add((artwork_uri, ARP.hasProvenanceEvent, creation_uri))
 
+        # Add creation date with better parsing
+        creation_date_str = None
         if artwork.get("creation_date"):
             date_str = str(artwork["creation_date"])
+            # Try to extract full date or year
             year_match = re.match(r"(\d{4})", date_str)
             if year_match:
+                creation_date_str = year_match.group(1)
                 self.graph.add(
                     (
                         creation_uri,
@@ -1301,10 +2086,73 @@ class RDFGenerator:
                     )
                 )
 
+        # Try to get more specific dates from time spans
+        time_spans = artwork.get("time_spans", [])
+        time_span_labels = artwork.get("time_span_labels", [])
+
+        period_desc = None
+        if time_spans and not creation_date_str:
+            # Try to extract date from time span URIs (often contain years)
+            for ts in time_spans:
+                if isinstance(ts, str):
+                    year_match = re.search(r"/(\d{4})$", ts)
+                    if year_match:
+                        creation_date_str = year_match.group(1)
+                        self.graph.add(
+                            (
+                                creation_uri,
+                                PROV.startedAtTime,
+                                Literal(
+                                    f"{year_match.group(1)}-01-01", datatype=XSD.date
+                                ),
+                            )
+                        )
+                        break
+
+        # Get time period description from time span labels (don't add separately)
+        if time_span_labels:
+            for label in time_span_labels:
+                if isinstance(label, dict):
+                    period_desc = (
+                        label.get("def") or label.get("en") or list(label.values())[0]
+                        if label
+                        else None
+                    )
+                elif isinstance(label, str):
+                    period_desc = label
+                else:
+                    period_desc = None
+
+                if period_desc:
+                    break
+
+        # Link artist if available
         if artwork.get("creator"):
             normalized_name = DataEnricher._normalize_artist_name(artwork["creator"])
             artist_uri = ARP[f"artist_{self._slugify(normalized_name)}"]
             self.graph.add((creation_uri, ARP.toOwner, artist_uri))
+
+        # Build a SINGLE comprehensive creation description
+        desc_parts = []
+        if artwork.get("creator"):
+            desc_parts.append(f"Created by {artwork['creator']}")
+        if creation_date_str:
+            desc_parts.append(f"in {creation_date_str}")
+        if period_desc and period_desc not in [
+            "Second millenium AD",
+            "Second millennium AD",
+        ]:
+            # Only add period if it's specific (not generic like "Second millennium")
+            desc_parts.append(f"({period_desc})")
+
+        if desc_parts:
+            self.graph.add(
+                (
+                    creation_uri,
+                    DC.description,
+                    Literal(" ".join(desc_parts), lang="en"),
+                )
+            )
 
         events.append(creation_uri)
         event_order += 1
@@ -1329,15 +2177,59 @@ class RDFGenerator:
             location_uri = ARP[f"location_{self._slugify(artwork['repository'])}"]
             self.graph.add((acquisition_uri, ARP.eventLocation, location_uri))
 
-            self.graph.add(
-                (
-                    acquisition_uri,
-                    DC.description,
-                    Literal(f"Acquired by {artwork['repository']}", lang="en"),
+            # Build a more detailed acquisition description
+            country = artwork.get("country", "")
+            if country:
+                self.graph.add(
+                    (
+                        acquisition_uri,
+                        DC.description,
+                        Literal(
+                            f"Acquired by {artwork['repository']}, {country}", lang="en"
+                        ),
+                    )
                 )
-            )
+            else:
+                self.graph.add(
+                    (
+                        acquisition_uri,
+                        DC.description,
+                        Literal(f"Acquired by {artwork['repository']}", lang="en"),
+                    )
+                )
 
             events.append(acquisition_uri)
+            event_order += 1
+
+        # Add provenance history from Europeana if available
+        if artwork.get("provenance_text"):
+            history_uri = ARP[f"prov_{artwork['id']}_history"]
+            self.graph.add((history_uri, RDF.type, ARP.ProvenanceEvent))
+            self.graph.add((history_uri, ARP.eventType, Literal("Provenance History")))
+            self.graph.add(
+                (
+                    history_uri,
+                    ARP.provenanceOrder,
+                    Literal(event_order, datatype=XSD.integer),
+                )
+            )
+            self.graph.add((artwork_uri, ARP.hasProvenanceEvent, history_uri))
+            self.graph.add(
+                (
+                    history_uri,
+                    DC.description,
+                    Literal(artwork["provenance_text"], lang="en"),
+                )
+            )
+            # Mark source as Europeana/museum record
+            self.graph.add(
+                (
+                    history_uri,
+                    ARP.sourceUri,
+                    Literal(artwork.get("record_url", "")),
+                )
+            )
+            events.append(history_uri)
 
         return events
 
@@ -1421,6 +2313,7 @@ class EuropeanaHeritageConverter:
         output_dir: Path,
         query: str = "painting",
         provider: Optional[str] = None,
+        country: Optional[str] = None,
         artwork_count: Optional[int] = None,
         enable_enrichment: bool = True,
         verbose: bool = True,
@@ -1430,6 +2323,7 @@ class EuropeanaHeritageConverter:
         self.output_dir = output_dir
         self.query = query
         self.provider = provider
+        self.country = country
         self.artwork_count = artwork_count
         self.enable_enrichment = enable_enrichment
         self.verbose = verbose
@@ -1465,10 +2359,15 @@ class EuropeanaHeritageConverter:
         print(f"Searching Europeana for: {self.query}")
         if self.provider:
             print(f"Filtering by provider: {self.provider}")
+        if self.country:
+            print(f"Filtering by country: {self.country}")
 
         # Fetch artworks from Europeana
         items = self.client.search_artworks(
-            query=self.query, provider=self.provider, limit=self.artwork_count
+            query=self.query,
+            provider=self.provider,
+            country=self.country,
+            limit=self.artwork_count,
         )
         print(f"Found {len(items)} artworks")
 
@@ -1488,23 +2387,41 @@ class EuropeanaHeritageConverter:
         self._write_prefixes()
 
         processed_count = 0
+        parsed_artworks_debug = []  # For debug JSON output
 
         try:
+            # Debug: save all raw items to JSON file
+            if self.debug:
+                debug_dir = self.output_dir / "debug"
+                debug_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+                # Save raw Europeana API responses
+                raw_json_path = debug_dir / f"europeana_raw_{timestamp}.json"
+                with open(raw_json_path, "w", encoding="utf-8") as f:
+                    json.dump(items, f, indent=2, ensure_ascii=False)
+                print(f"\n✓ Debug: Raw Europeana items saved to: {raw_json_path}\n")
+
             for i, item in enumerate(items, 1):
                 # Debug: show raw Europeana fields for first item
                 if self.debug and i == 1:
                     print("\n=== DEBUG: Raw Europeana item fields ===")
-                    creator_fields = [
+                    debug_fields = [
                         "dcCreator",
                         "dcCreatorLangAware",
                         "dcContributor",
                         "dcContributorLangAware",
                         "edmAgentLabelLangAware",
+                        "dcDescriptionLangAware",
+                        "dctermsExtent",
+                        "dcFormat",
+                        "edmTimespan",
+                        "edmTimespanLabel",
                     ]
-                    for field in creator_fields:
+                    for field in debug_fields:
                         if field in item:
                             print(f"  {field}: {item[field]}")
-                    print("  All keys:", list(item.keys())[:20], "...")
+                    print("  All keys:", sorted(item.keys()))
                     print("=== END DEBUG ===\n")
 
                 # Parse the search result
@@ -1517,13 +2434,62 @@ class EuropeanaHeritageConverter:
                 title = artwork.get("title", "Unknown")[:50]
                 print(f"Processing artwork {i}/{len(items)}: {title}")
 
+                # Fetch full record from Record API for richer metadata
+                europeana_id = artwork.get("europeana_id")
+                if europeana_id:
+                    print("  Fetching full record...")
+                    full_record = self.client.get_record(europeana_id)
+                    if full_record:
+                        artwork = EuropeanaParser.parse_full_record(
+                            full_record, artwork
+                        )
+                        print("    ✓ Full record retrieved")
+                        if artwork.get("provenance_text"):
+                            print(
+                                f"    ✓ Provenance found: {artwork['provenance_text'][:60]}..."
+                            )
+                        if artwork.get("dimensions"):
+                            print(
+                                f"    ✓ Dimensions from Europeana: {artwork['dimensions']}"
+                            )
+                        if self.debug and full_record:
+                            # Save full record to debug
+                            debug_dir = self.output_dir / "debug"
+                            record_file = (
+                                debug_dir / f"record_{i}_{artwork['id'][:30]}.json"
+                            )
+                            with open(record_file, "w", encoding="utf-8") as f:
+                                json.dump(full_record, f, indent=2, ensure_ascii=False)
+                    else:
+                        print("    ⚠ Could not fetch full record")
+
+                # Debug: show parsed fields
+                if self.debug:
+                    print(f"  Dimensions: {artwork.get('dimensions')}")
+                    print(
+                        f"  Description ({artwork.get('description_lang', 'unknown')}): {(artwork.get('description') or '')[:80]}..."
+                    )
+
                 artist_enrichment = {}
                 artwork_enrichment = {}
                 getty_aat_uris = []
 
                 if self.enable_enrichment and self.enricher:
-                    # Getty AAT mapping
+                    # Getty AAT mapping (name-based)
                     getty_aat_uris = self.enricher.get_getty_aat_uris(artwork)
+
+                    # Merge with Getty AAT URIs extracted directly from Europeana
+                    extracted_aat = artwork.get("getty_aat_from_europeana", [])
+                    if extracted_aat:
+                        # Convert to list if it's not already
+                        if isinstance(extracted_aat, set):
+                            extracted_aat = list(extracted_aat)
+
+                        # Add unique URIs
+                        for uri in extracted_aat:
+                            if uri not in getty_aat_uris:
+                                getty_aat_uris.append(uri)
+
                     if getty_aat_uris:
                         print(f"  ✓ Getty AAT: {len(getty_aat_uris)} concept(s) linked")
                         self._stats["getty_aat_linked"] += 1
@@ -1531,11 +2497,46 @@ class EuropeanaHeritageConverter:
                         self._stats["getty_aat_not_found"] += 1
 
                     # Artist enrichment
-                    if artwork.get("creator"):
-                        print(f"  Enriching artist: {artwork['creator']}")
-                        artist_enrichment = self.enricher.enrich_artist(
-                            artwork["creator"]
-                        )
+                    creator_name = artwork.get("creator")
+                    resolved_name = artwork.get("artist_name_resolved")
+
+                    # Use resolved name if available (often better formatted)
+                    artist_name_to_use = resolved_name or creator_name
+
+                    if artist_name_to_use:
+                        print(f"  Enriching artist: {artist_name_to_use}")
+
+                        # Pre-fill enrichment with data found in Europeana
+                        artist_enrichment = {}
+                        if artwork.get("artist_wikidata_from_europeana"):
+                            artist_enrichment["wikidata_uri"] = artwork[
+                                "artist_wikidata_from_europeana"
+                            ]
+                        if artwork.get("artist_dbpedia_from_europeana"):
+                            artist_enrichment["dbpedia_uri"] = artwork[
+                                "artist_dbpedia_from_europeana"
+                            ]
+
+                        # If we already have links, we might still want to fetch details (birth/death),
+                        # or we can trust the enrichment service to handle it if we pass the known URIs.
+                        # For now, let's call enrich_artist. simpler logic: if we have links, verify/fetch details.
+                        # But enricher.enrich_artist mainly searches by name.
+
+                        # Let's run standard enrichment first
+                        enriched_data = self.enricher.enrich_artist(artist_name_to_use)
+
+                        # Merge/Prioritize Europeana found links (they are likely more accurate for the specific record)
+                        if artwork.get("artist_wikidata_from_europeana"):
+                            enriched_data["wikidata_uri"] = artwork[
+                                "artist_wikidata_from_europeana"
+                            ]
+                        if artwork.get("artist_dbpedia_from_europeana"):
+                            enriched_data["dbpedia_uri"] = artwork[
+                                "artist_dbpedia_from_europeana"
+                            ]
+
+                        artist_enrichment = enriched_data
+
                         has_artist_link = False
                         if artist_enrichment.get("wikidata_uri"):
                             print(
@@ -1563,6 +2564,15 @@ class EuropeanaHeritageConverter:
                         )
                         self._stats["artworks_enriched_wikidata"] += 1
                         has_artwork_link = True
+
+                        # Use Wikidata dimensions if not already set from Europeana
+                        if artwork_enrichment.get("dimensions") and not artwork.get(
+                            "dimensions"
+                        ):
+                            artwork["dimensions"] = artwork_enrichment["dimensions"]
+                            print(
+                                f"    ✓ Dimensions from Wikidata: {artwork['dimensions']}"
+                            )
                     if artwork_enrichment.get("dbpedia_uri"):
                         print(
                             f"  ✓ Artwork DBpedia: {artwork_enrichment['dbpedia_uri']}"
@@ -1582,6 +2592,10 @@ class EuropeanaHeritageConverter:
                 processed_count += 1
                 self._stats["artworks_processed"] = processed_count
 
+                # Collect for debug output
+                if self.debug:
+                    parsed_artworks_debug.append(artwork)
+
                 # Incremental save
                 if processed_count % self.BATCH_SIZE == 0:
                     self._append_graph_to_file()
@@ -1592,6 +2606,15 @@ class EuropeanaHeritageConverter:
             if len(self.rdf_generator.graph) > 0:
                 self._append_graph_to_file()
                 print("  [Final save - ensuring all data is written to disk]")
+
+            # Debug: save parsed artworks to JSON
+            if self.debug and parsed_artworks_debug:
+                debug_dir = self.output_dir / "debug"
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                parsed_json_path = debug_dir / f"europeana_parsed_{timestamp}.json"
+                with open(parsed_json_path, "w", encoding="utf-8") as f:
+                    json.dump(parsed_artworks_debug, f, indent=2, ensure_ascii=False)
+                print(f"✓ Debug: Parsed artworks saved to: {parsed_json_path}")
 
         self._print_enrichment_summary()
 
@@ -1792,6 +2815,13 @@ Get your API key at: https://apis.europeana.eu/
     )
 
     parser.add_argument(
+        "--country",
+        type=str,
+        default=None,
+        help="Filter by country (e.g., 'Romania', 'Netherlands', 'France')",
+    )
+
+    parser.add_argument(
         "--output-dir",
         "-o",
         type=Path,
@@ -1855,6 +2885,7 @@ def main() -> int:
             output_dir=args.output_dir,
             query=args.query,
             provider=args.provider,
+            country=args.country,
             artwork_count=artwork_count,
             enable_enrichment=not args.no_enrichment,
             debug=args.debug,
