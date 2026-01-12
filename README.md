@@ -98,6 +98,20 @@ The system features a modern React frontend with an elegant museum-inspired desi
   <p><em>SPARQL Explorer - Query the knowledge graph directly</em></p>
 </div>
 
+<br />
+
+<div align="center"> 
+  <img src="docs/screenshots/similar-artworks.png" alt="Similar Artworks" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);" />
+  <p><em>Similar Artworks - Smart recommendations based on style, artist, and period</em></p>
+</div>
+
+<br />
+
+<div align="center"> 
+  <img src="docs/screenshots/qr-share.png" alt="QR Code Sharing" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);" />
+  <p><em>QR Code Sharing - Easily share and access artwork details on mobile devices</em></p>
+</div>
+
 
 ### :space_invader: Tech Stack
 

@@ -24,8 +24,8 @@ WHERE {
 LIMIT 20`,
   },
   {
-    name: "Artworks by Van Gogh",
-    description: "Find all artworks created by Vincent van Gogh",
+    name: "Artworks by Theodor Pallady",
+    description: "Find all artworks created by Theodor Pallady",
     category: "Basic",
     query: `PREFIX arp: <http://example.org/arp#>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
@@ -37,7 +37,8 @@ WHERE {
   ?artwork a arp:Artwork ;
            dc:title ?title ;
            dc:creator ?artist .
-  ?artist schema:name "Vincent van Gogh"@en .
+  ?artist schema:name ?artistName .
+  FILTER(STR(?artistName) = "Theodor Pallady")
   OPTIONAL { ?artwork dcterms:created ?dateCreated }
   OPTIONAL { ?artwork arp:artworkMedium ?medium }
 }`,
@@ -94,11 +95,12 @@ PREFIX schema: <http://schema.org/>
 
 SELECT ?eventType ?description ?startDate ?fromOwnerName ?toOwnerName ?locationName
 WHERE {
-  ?artwork dc:title "Mona Lisa"@en ;
+  ?artwork dc:title ?title ;
            arp:hasProvenanceEvent ?event .
+  FILTER(STR(?title) = "Natură statică cu melc")
   ?event arp:eventType ?eventType ;
-         dc:description ?description ;
          prov:startedAtTime ?startDate .
+  OPTIONAL { ?event dc:description ?description }
   OPTIONAL { 
     ?event arp:fromOwner ?fromOwner .
     ?fromOwner schema:name ?fromOwnerName .
@@ -115,17 +117,17 @@ WHERE {
 ORDER BY ?startDate`,
   },
   {
-    name: "Artworks by period",
-    description: "Group artworks by art historical period",
+    name: "Artworks by style",
+    description: "Group artworks by style",
     category: "Analytics",
     query: `PREFIX arp: <http://example.org/arp#>
 
-SELECT ?period (COUNT(?artwork) as ?count)
+SELECT ?style (COUNT(?artwork) as ?count)
 WHERE {
   ?artwork a arp:Artwork ;
-           arp:artworkPeriod ?period .
+           arp:artworkStyle ?style .
 }
-GROUP BY ?period
+GROUP BY ?style
 ORDER BY DESC(?count)`,
   },
   {
@@ -274,48 +276,6 @@ WHERE {
 GROUP BY ?material ?label ?broaderLabel
 ORDER BY ?broaderLabel DESC(?count)`,
   },
-  {
-    name: "Temporal Material Trends",
-    description: "Material distribution across art historical periods",
-    category: "Getty Statistics",
-    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
-PREFIX schema: <http://schema.org/>
-PREFIX arp: <http://example.org/arp#>
-
-SELECT ?period ?material (COUNT(DISTINCT ?artwork) AS ?count)
-WHERE {
-  ?artwork a arp:Artwork ;
-           arp:artworkPeriod ?period ;
-           schema:artMedium ?material .
-  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
-}
-GROUP BY ?period ?material
-ORDER BY ?period DESC(?count)`,
-  },
-  {
-    name: "Cross-Analysis: Period x Material",
-    description: "Pivot table showing material usage across periods",
-    category: "Getty Statistics",
-    query: `PREFIX aat: <http://vocab.getty.edu/aat/>
-PREFIX schema: <http://schema.org/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX arp: <http://example.org/arp#>
-
-SELECT ?period ?materialLabel (COUNT(DISTINCT ?artwork) AS ?count)
-WHERE {
-  ?artwork a arp:Artwork ;
-           arp:artworkPeriod ?period ;
-           schema:artMedium ?material .
-  FILTER(STRSTARTS(STR(?material), "http://vocab.getty.edu/aat/"))
-  
-  SERVICE <http://vocab.getty.edu/sparql> {
-    ?material skos:prefLabel ?materialLabel .
-    FILTER(LANG(?materialLabel) = "en")
-  }
-}
-GROUP BY ?period ?materialLabel
-ORDER BY ?period ?materialLabel`,
-  },
 ];
 
 interface SPARQLResult {
@@ -358,8 +318,7 @@ const SPARQLPage = () => {
     const checkConnection = async () => {
       try {
         const response = await fetch(
-          `${
-            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"
+          `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"
           }/sparql/status`
         );
         const data = await response.json();
@@ -426,7 +385,7 @@ const SPARQLPage = () => {
       if (err instanceof Error && err.name !== "AbortError") {
         setError(
           err.message ||
-            "Failed to execute query. Please check your query syntax and try again."
+          "Failed to execute query. Please check your query syntax and try again."
         );
       }
     } finally {
@@ -473,9 +432,8 @@ const SPARQLPage = () => {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `sparql_results_${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
+    link.download = `sparql_results_${new Date().toISOString().split("T")[0]
+      }.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   }, [results]);
@@ -496,9 +454,8 @@ const SPARQLPage = () => {
     const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `sparql_results_${
-      new Date().toISOString().split("T")[0]
-    }.json`;
+    link.download = `sparql_results_${new Date().toISOString().split("T")[0]
+      }.json`;
     link.click();
     URL.revokeObjectURL(link.href);
   }, [results]);
@@ -546,28 +503,26 @@ const SPARQLPage = () => {
           {/* Connection Status Badge */}
           <div className="mt-6 flex items-center gap-3">
             <div
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
-                connectionStatus.checking
-                  ? "bg-bronze/10 text-bronze"
-                  : connectionStatus.connected
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${connectionStatus.checking
+                ? "bg-bronze/10 text-bronze"
+                : connectionStatus.connected
                   ? "bg-green-100 text-green-700"
                   : "bg-red-100 text-red-700"
-              }`}
+                }`}
             >
               <span
-                className={`h-2 w-2 rounded-full ${
-                  connectionStatus.checking
-                    ? "bg-bronze animate-pulse"
-                    : connectionStatus.connected
+                className={`h-2 w-2 rounded-full ${connectionStatus.checking
+                  ? "bg-bronze animate-pulse"
+                  : connectionStatus.connected
                     ? "bg-green-500"
                     : "bg-red-500"
-                }`}
+                  }`}
               />
               {connectionStatus.checking
                 ? "Checking connection..."
                 : connectionStatus.connected
-                ? "Fuseki Connected"
-                : "Fuseki Offline"}
+                  ? "Fuseki Connected"
+                  : "Fuseki Offline"}
             </div>
           </div>
         </div>
@@ -587,11 +542,10 @@ const SPARQLPage = () => {
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                      selectedCategory === category
-                        ? "bg-gradient-to-r from-gold to-gold-dark text-charcoal shadow-md"
-                        : "bg-ivory border border-bronze/20 text-charcoal-light hover:border-gold hover:text-charcoal"
-                    }`}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${selectedCategory === category
+                      ? "bg-gradient-to-r from-gold to-gold-dark text-charcoal shadow-md"
+                      : "bg-ivory border border-bronze/20 text-charcoal-light hover:border-gold hover:text-charcoal"
+                      }`}
                   >
                     {category}
                   </button>
