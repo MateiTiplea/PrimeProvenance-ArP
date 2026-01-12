@@ -492,7 +492,7 @@ const ArtworkDetailPage = () => {
             </p>
 
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {recommendations.map((rec) => (
+              {recommendations.slice(0, 4).map((rec) => (
                 <Link
                   key={rec.id}
                   to={`/artworks/${rec.id}`}

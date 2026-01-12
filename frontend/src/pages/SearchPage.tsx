@@ -11,6 +11,11 @@ const SearchPage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination
+  const limit = 12;
+  const parsedPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
+
   // Filter state
   const [filters, setFilters] = useState<SearchFilters>({
     artist: searchParams.get('artist') || undefined,
@@ -19,14 +24,14 @@ const SearchPage = () => {
     location: searchParams.get('location') || undefined,
   });
 
+
   // Perform search
-  // Perform search
-  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters) => {
+  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters, currentPage: number = 1) => {
     setIsSearching(true);
     setError(null);
 
     try {
-      const response = await searchApi.search(query, currentFilters);
+      const response = await searchApi.search(query, currentFilters, currentPage, limit);
       setSearchResponse(response.data);
     } catch (err) {
       console.error('Search error:', err);
@@ -35,7 +40,7 @@ const SearchPage = () => {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [limit]);
 
   // Search on initial load if query param exists or filters are present
   useEffect(() => {
@@ -43,19 +48,29 @@ const SearchPage = () => {
     setSearchQuery(q);
 
     // Perform initial search (defaults to "browse all")
-    performSearch(q, filters);
+    performSearch(q, filters, page);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update URL when filters change
-  const updateUrlParams = (query: string, newFilters: SearchFilters) => {
+  const updateUrlParams = (query: string, newFilters: SearchFilters, newPage: number = 1) => {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (newFilters.artist) params.set('artist', newFilters.artist);
     if (newFilters.period) params.set('period', newFilters.period);
     if (newFilters.medium) params.set('medium', newFilters.medium);
     if (newFilters.location) params.set('location', newFilters.location);
+    if (newPage > 1) params.set('page', String(newPage));
     setSearchParams(params);
   };
+
+  // Handle pagination
+  const goToPage = (newPage: number) => {
+    updateUrlParams(searchQuery, filters, newPage);
+    performSearch(searchQuery, filters, newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const totalPages = searchResponse ? Math.ceil(searchResponse.total / limit) : 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -397,6 +412,82 @@ const SearchPage = () => {
                       </Link>
                     ))}
                   </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex justify-center">
+                      <nav className="flex items-center gap-2">
+                        <button
+                          onClick={() => goToPage(page - 1)}
+                          disabled={page <= 1}
+                          className="rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          {/* First page */}
+                          {page > 2 && (
+                            <>
+                              <button
+                                onClick={() => goToPage(1)}
+                                className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                              >
+                                1
+                              </button>
+                              {page > 3 && <span className="px-2 text-bronze">...</span>}
+                            </>
+                          )}
+
+                          {/* Previous page */}
+                          {page > 1 && (
+                            <button
+                              onClick={() => goToPage(page - 1)}
+                              className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                            >
+                              {page - 1}
+                            </button>
+                          )}
+
+                          {/* Current page */}
+                          <span className="rounded-lg bg-gold/20 px-3 py-2 text-sm font-medium text-gold">
+                            {page}
+                          </span>
+
+                          {/* Next page */}
+                          {page < totalPages && (
+                            <button
+                              onClick={() => goToPage(page + 1)}
+                              className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                            >
+                              {page + 1}
+                            </button>
+                          )}
+
+                          {/* Last page */}
+                          {page < totalPages - 1 && (
+                            <>
+                              {page < totalPages - 2 && <span className="px-2 text-bronze">...</span>}
+                              <button
+                                onClick={() => goToPage(totalPages)}
+                                className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                              >
+                                {totalPages}
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => goToPage(page + 1)}
+                          disabled={page >= totalPages}
+                          className="rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </nav>
+                    </div>
+                  )}
                 </>
               )}
             </div>
