@@ -20,6 +20,8 @@ async def search_artworks(
     period: Optional[str] = Query(None, description="Filter by art period"),
     medium: Optional[str] = Query(None, description="Filter by artwork medium"),
     location: Optional[str] = Query(None, description="Filter by current location"),
+    style: Optional[str] = Query(None, description="Filter by artwork style"),
+    sort: Optional[str] = Query("title", description="Sort by: title (A-Z) or date (newest first)"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page")
 ):
@@ -37,6 +39,8 @@ async def search_artworks(
     - `period` (optional): Filter by art period
     - `medium` (optional): Filter by artwork medium
     - `location` (optional): Filter by current location
+    - `style` (optional): Filter by artwork style
+    - `sort` (optional): Sort by title or date (default: title)
     - `page` (optional): Page number for pagination (default: 1)
     - `limit` (optional): Number of results per page (default: 20, max: 100)
     
@@ -57,7 +61,9 @@ async def search_artworks(
             artist=artist,
             period=period,
             medium=medium,
-            location=location
+            location=location,
+            style=style,
+            sort=sort
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching artworks: {str(e)}")

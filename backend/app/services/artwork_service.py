@@ -666,6 +666,8 @@ class ArtworkService:
         period: Optional[str] = None,
         medium: Optional[str] = None,
         location: Optional[str] = None,
+        style: Optional[str] = None,
+        sort: Optional[str] = "title",
     ) -> Dict[str, Any]:
         """Full-text search across artworks with faceted filtering."""
         from ..models.artwork import FacetItem, SearchFacets, SearchResponse
@@ -719,6 +721,10 @@ class ArtworkService:
             additional_filters.append(
                 f'FILTER(CONTAINS(LCASE(?currentLocation), LCASE("{self._escape_literal(location)}")))'
             )
+        if style:
+            additional_filters.append(
+                f'FILTER(CONTAINS(LCASE(?style), LCASE("{self._escape_literal(style)}")))'
+            )
 
         additional_filter_clause = "\n            ".join(additional_filters)
 
@@ -736,6 +742,7 @@ class ArtworkService:
             OPTIONAL {{ ?artwork arp:artworkMedium ?medium }}
             OPTIONAL {{ ?artwork arp:currentLocation ?locUri . ?locUri schema:name ?currentLocation }}
             OPTIONAL {{ ?artwork arp:artworkPeriod ?period }}
+            OPTIONAL {{ ?artwork arp:artworkStyle ?style }}
             OPTIONAL {{ 
                 ?artwork dc:description ?description .
                 FILTER(LANG(?description) = "en" || LANG(?description) = "" || NOT EXISTS {{ ?artwork dc:description ?enDesc . FILTER(LANG(?enDesc) = "en") }})
@@ -779,7 +786,7 @@ class ArtworkService:
             {search_filter_clause}
             {additional_filter_clause}
         }}
-        ORDER BY ?title
+        ORDER BY {'DESC(?dateCreated)' if sort == 'date' else '?title'}
         LIMIT {limit}
         OFFSET {offset}
         """
@@ -947,6 +954,38 @@ class ArtworkService:
                 count = binding.get("count", {}).get("value")
                 if name and count:
                     facets.locations.append(FacetItem(name=name, count=int(count)))
+        except Exception:
+            pass
+
+        # Style facets
+        style_query = f"""
+        PREFIX dc: <{DC_NS}>
+        PREFIX arp: <{ARP_NS}>
+        PREFIX schema: <{SCHEMA_NS}>
+        
+        SELECT ?style (COUNT(DISTINCT ?artwork) AS ?count) WHERE {{
+            ?artwork a arp:Artwork .
+            ?artwork dc:title ?title .
+            FILTER(LANG(?title) = "en" || NOT EXISTS {{ ?artwork dc:title ?enTitle . FILTER(LANG(?enTitle) = "en") }})
+            ?artwork arp:artworkStyle ?style .
+            OPTIONAL {{ ?artwork dc:creator ?artistUri . ?artistUri schema:name ?artist }}
+            OPTIONAL {{ 
+                ?artwork dc:description ?description .
+                FILTER(LANG(?description) = "en" || LANG(?description) = "" || NOT EXISTS {{ ?artwork dc:description ?enDesc . FILTER(LANG(?enDesc) = "en") }})
+            }}
+            {search_filter_clause}
+        }}
+        GROUP BY ?style
+        ORDER BY DESC(?count)
+        LIMIT 20
+        """
+        try:
+            result = sparql_service.execute_query(style_query)
+            for binding in result["results"]["bindings"]:
+                name = binding.get("style", {}).get("value")
+                count = binding.get("count", {}).get("value")
+                if name and count:
+                    facets.styles.append(FacetItem(name=name, count=int(count)))
         except Exception:
             pass
 

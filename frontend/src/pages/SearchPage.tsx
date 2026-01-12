@@ -10,6 +10,14 @@ const SearchPage = () => {
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'title' | 'date'>(
+    (searchParams.get('sort') as 'title' | 'date') || 'title'
+  );
+
+  // Pagination
+  const limit = 12;
+  const parsedPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = Number.isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage;
 
   // Filter state
   const [filters, setFilters] = useState<SearchFilters>({
@@ -17,16 +25,17 @@ const SearchPage = () => {
     period: searchParams.get('period') || undefined,
     medium: searchParams.get('medium') || undefined,
     location: searchParams.get('location') || undefined,
+    style: searchParams.get('style') || undefined,
   });
 
+
   // Perform search
-  // Perform search
-  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters) => {
+  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters, currentPage: number = 1, currentSort: 'title' | 'date' = 'title') => {
     setIsSearching(true);
     setError(null);
 
     try {
-      const response = await searchApi.search(query, currentFilters);
+      const response = await searchApi.search(query, currentFilters, currentPage, limit, currentSort);
       setSearchResponse(response.data);
     } catch (err) {
       console.error('Search error:', err);
@@ -35,7 +44,7 @@ const SearchPage = () => {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [limit]);
 
   // Search on initial load if query param exists or filters are present
   useEffect(() => {
@@ -43,33 +52,44 @@ const SearchPage = () => {
     setSearchQuery(q);
 
     // Perform initial search (defaults to "browse all")
-    performSearch(q, filters);
+    performSearch(q, filters, page, sortBy);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update URL when filters change
-  const updateUrlParams = (query: string, newFilters: SearchFilters) => {
+  const updateUrlParams = (query: string, newFilters: SearchFilters, newPage: number = 1) => {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (newFilters.artist) params.set('artist', newFilters.artist);
     if (newFilters.period) params.set('period', newFilters.period);
     if (newFilters.medium) params.set('medium', newFilters.medium);
     if (newFilters.location) params.set('location', newFilters.location);
+    if (newFilters.style) params.set('style', newFilters.style);
+    if (newPage > 1) params.set('page', String(newPage));
     setSearchParams(params);
   };
+
+  // Handle pagination
+  const goToPage = (newPage: number) => {
+    updateUrlParams(searchQuery, filters, newPage);
+    performSearch(searchQuery, filters, newPage, sortBy);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const totalPages = searchResponse ? Math.ceil(searchResponse.total / limit) : 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const hasFilters = Object.values(filters).some(v => v !== undefined);
     if (!searchQuery.trim() && !hasFilters) return;
     updateUrlParams(searchQuery, filters);
-    performSearch(searchQuery, filters);
+    performSearch(searchQuery, filters, 1, sortBy);
   };
 
   const handleFilterChange = (filterType: keyof SearchFilters, value: string | undefined) => {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
     updateUrlParams(searchQuery, newFilters);
-    performSearch(searchQuery, newFilters);
+    performSearch(searchQuery, newFilters, 1, sortBy);
   };
 
   const clearFilters = () => {
@@ -77,7 +97,7 @@ const SearchPage = () => {
     setFilters(clearedFilters);
     if (searchQuery.trim()) {
       updateUrlParams(searchQuery, clearedFilters);
-      performSearch(searchQuery, clearedFilters);
+      performSearch(searchQuery, clearedFilters, 1, sortBy);
     } else {
       // If no query and clearing filters, reset to empty state (or browse all?)
       // Let's reset to empty state if no query
@@ -86,11 +106,25 @@ const SearchPage = () => {
     }
   };
 
-  const handleQuickFilter = (period: string) => {
-    handleFilterChange('period', filters.period === period ? undefined : period);
+  const hasActiveFilters = filters.artist || filters.period || filters.medium || filters.location || filters.style;
+
+  // Handle sort change
+  const handleSortChange = (newSort: 'title' | 'date') => {
+    setSortBy(newSort);
+    // Update URL with sort param
+    const params = new URLSearchParams(searchParams);
+    if (newSort === 'date') {
+      params.set('sort', 'date');
+    } else {
+      params.delete('sort');
+    }
+    setSearchParams(params);
+    // Re-fetch with new sort order
+    performSearch(searchQuery, filters, 1, newSort);
   };
 
-  const hasActiveFilters = filters.artist || filters.period || filters.medium || filters.location;
+  // Results are now sorted server-side
+  const sortedResults = searchResponse?.results || [];
 
   return (
     <div className="min-h-screen bg-parchment">
@@ -137,21 +171,23 @@ const SearchPage = () => {
             </div>
           </form>
 
-          {/* Quick Filters */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {['Renaissance', 'Impressionism', 'Post-Impressionism', 'Dutch Golden Age', 'Expressionism'].map((period) => (
-              <button
-                key={period}
-                onClick={() => handleQuickFilter(period)}
-                className={`rounded-full border px-4 py-1 text-sm transition-colors ${filters.period === period
-                  ? 'border-gold bg-gold/20 text-gold'
-                  : 'border-parchment/30 text-parchment/70 hover:border-gold hover:text-gold'
-                  }`}
-              >
-                {period}
-              </button>
-            ))}
-          </div>
+          {/* Quick Filters - Dynamic from facets (artwork styles) */}
+          {searchResponse?.facets?.styles && searchResponse.facets.styles.length > 0 && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {searchResponse.facets.styles.slice(0, 5).map((facet) => (
+                <button
+                  key={facet.name}
+                  onClick={() => handleFilterChange('style', filters.style === facet.name ? undefined : facet.name)}
+                  className={`cursor-pointer rounded-full border px-4 py-1 text-sm transition-colors ${filters.style === facet.name
+                    ? 'border-gold bg-gold/20 text-gold'
+                    : 'border-parchment/30 text-parchment/70 hover:border-gold hover:text-gold'
+                    }`}
+                >
+                  {facet.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -328,14 +364,18 @@ const SearchPage = () => {
                     <p className="text-charcoal-light">
                       Found <span className="font-medium text-charcoal">{searchResponse?.total}</span> artworks
                     </p>
-                    <select className="rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal focus:border-gold focus:outline-none">
-                      <option value="relevance">Sort by Relevance</option>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => handleSortChange(e.target.value as 'title' | 'date')}
+                      className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal focus:border-gold focus:outline-none"
+                    >
                       <option value="title">Title A-Z</option>
+                      <option value="date">Date (Newest)</option>
                     </select>
                   </div>
 
                   <div className="space-y-4">
-                    {searchResponse?.results.map((artwork) => (
+                    {sortedResults.map((artwork) => (
                       <Link
                         key={artwork.id}
                         to={`/artworks/${artwork.id}`}
@@ -397,6 +437,82 @@ const SearchPage = () => {
                       </Link>
                     ))}
                   </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex justify-center">
+                      <nav className="flex items-center gap-2">
+                        <button
+                          onClick={() => goToPage(page - 1)}
+                          disabled={page <= 1}
+                          className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          {/* First page */}
+                          {page > 2 && (
+                            <>
+                              <button
+                                onClick={() => goToPage(1)}
+                                className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                              >
+                                1
+                              </button>
+                              {page > 3 && <span className="px-2 text-bronze">...</span>}
+                            </>
+                          )}
+
+                          {/* Previous page */}
+                          {page > 1 && (
+                            <button
+                              onClick={() => goToPage(page - 1)}
+                              className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                            >
+                              {page - 1}
+                            </button>
+                          )}
+
+                          {/* Current page */}
+                          <span className="rounded-lg bg-gold/20 px-3 py-2 text-sm font-medium text-gold">
+                            {page}
+                          </span>
+
+                          {/* Next page */}
+                          {page < totalPages && (
+                            <button
+                              onClick={() => goToPage(page + 1)}
+                              className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                            >
+                              {page + 1}
+                            </button>
+                          )}
+
+                          {/* Last page */}
+                          {page < totalPages - 1 && (
+                            <>
+                              {page < totalPages - 2 && <span className="px-2 text-bronze">...</span>}
+                              <button
+                                onClick={() => goToPage(totalPages)}
+                                className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                              >
+                                {totalPages}
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => goToPage(page + 1)}
+                          disabled={page >= totalPages}
+                          className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </nav>
+                    </div>
+                  )}
                 </>
               )}
             </div>

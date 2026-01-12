@@ -93,6 +93,7 @@ class SearchFacets(BaseModel):
     periods: List[FacetItem] = []
     media: List[FacetItem] = []
     locations: List[FacetItem] = []
+    styles: List[FacetItem] = []
 
 
 class SearchResponse(BaseModel):

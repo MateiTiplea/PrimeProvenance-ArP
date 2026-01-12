@@ -125,8 +125,8 @@ export const sparqlApi = {
 // Search API endpoints
 export const searchApi = {
   // Search artworks
-  search: (query: string, filters?: SearchFilters) =>
-    api.get<SearchResponse>("/search", { params: { q: query, ...filters } }),
+  search: (query: string, filters?: SearchFilters, page?: number, limit?: number, sort?: 'title' | 'date') =>
+    api.get<SearchResponse>("/search", { params: { q: query, page, limit, sort, ...filters } }),
 
   // Get recommendations for an artwork
   getRecommendations: (artworkId: string) =>
@@ -270,6 +270,7 @@ export interface SearchFilters {
   period?: string;
   medium?: string;
   location?: string;
+  style?: string;
 }
 
 export interface SearchResponse {
@@ -283,6 +284,7 @@ export interface SearchResponse {
     periods: { name: string; count: number }[];
     media: { name: string; count: number }[];
     locations: { name: string; count: number }[];
+    styles: { name: string; count: number }[];
   };
 }
 

@@ -31,8 +31,8 @@ const Footer = () => {
               </span>
             </Link>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-parchment/70">
-              Artwork Provenance (ArP) is a semantic web platform for exploring 
-              and managing the history and authenticity of artistic works, 
+              Artwork Provenance (ArP) is a semantic web platform for exploring
+              and managing the history and authenticity of artistic works,
               leveraging linked data from DBpedia, Wikidata, and Getty vocabularies.
             </p>
             <div className="mt-6 flex gap-4">
@@ -111,7 +111,9 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="/docs/user-guide.html"
+                  href="https://github.com/MateiTiplea/PrimeProvenance-ArP/tree/main?tab=readme-ov-file#toolbox-getting-started"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-parchment/70 transition-colors hover:text-ivory"
                 >
                   User Guide
@@ -119,7 +121,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="/api/docs"
+                  href="http://localhost:8000/api/docs"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-parchment/70 transition-colors hover:text-ivory"
