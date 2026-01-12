@@ -111,7 +111,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="https://github.com/MateiTiplea/PrimeProvenance-ArP/tree/main?tab=readme-ov-file#eyes-usage"
+                  href="https://github.com/MateiTiplea/PrimeProvenance-ArP/tree/main?tab=readme-ov-file#toolbox-getting-started"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-parchment/70 transition-colors hover:text-ivory"
@@ -121,7 +121,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="/api/docs"
+                  href="http://localhost:8000/api/docs"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-parchment/70 transition-colors hover:text-ivory"

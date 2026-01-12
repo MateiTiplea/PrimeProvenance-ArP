@@ -11,6 +11,9 @@ app = FastAPI(
     title="ArP API",
     description="Artwork Provenance API with external SPARQL integration for DBpedia, Wikidata, and Getty AAT",
     version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # CORS middleware for frontend access
