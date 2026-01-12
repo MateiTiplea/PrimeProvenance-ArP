@@ -667,6 +667,7 @@ class ArtworkService:
         medium: Optional[str] = None,
         location: Optional[str] = None,
         style: Optional[str] = None,
+        sort: Optional[str] = "title",
     ) -> Dict[str, Any]:
         """Full-text search across artworks with faceted filtering."""
         from ..models.artwork import FacetItem, SearchFacets, SearchResponse
@@ -785,7 +786,7 @@ class ArtworkService:
             {search_filter_clause}
             {additional_filter_clause}
         }}
-        ORDER BY ?title
+        ORDER BY {'DESC(?dateCreated)' if sort == 'date' else '?title'}
         LIMIT {limit}
         OFFSET {offset}
         """

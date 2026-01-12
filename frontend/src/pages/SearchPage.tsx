@@ -30,12 +30,12 @@ const SearchPage = () => {
 
 
   // Perform search
-  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters, currentPage: number = 1) => {
+  const performSearch = useCallback(async (query: string, currentFilters: SearchFilters, currentPage: number = 1, currentSort: 'title' | 'date' = 'title') => {
     setIsSearching(true);
     setError(null);
 
     try {
-      const response = await searchApi.search(query, currentFilters, currentPage, limit);
+      const response = await searchApi.search(query, currentFilters, currentPage, limit, currentSort);
       setSearchResponse(response.data);
     } catch (err) {
       console.error('Search error:', err);
@@ -52,7 +52,7 @@ const SearchPage = () => {
     setSearchQuery(q);
 
     // Perform initial search (defaults to "browse all")
-    performSearch(q, filters, page);
+    performSearch(q, filters, page, sortBy);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update URL when filters change
@@ -71,7 +71,7 @@ const SearchPage = () => {
   // Handle pagination
   const goToPage = (newPage: number) => {
     updateUrlParams(searchQuery, filters, newPage);
-    performSearch(searchQuery, filters, newPage);
+    performSearch(searchQuery, filters, newPage, sortBy);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -82,14 +82,14 @@ const SearchPage = () => {
     const hasFilters = Object.values(filters).some(v => v !== undefined);
     if (!searchQuery.trim() && !hasFilters) return;
     updateUrlParams(searchQuery, filters);
-    performSearch(searchQuery, filters);
+    performSearch(searchQuery, filters, 1, sortBy);
   };
 
   const handleFilterChange = (filterType: keyof SearchFilters, value: string | undefined) => {
     const newFilters = { ...filters, [filterType]: value };
     setFilters(newFilters);
     updateUrlParams(searchQuery, newFilters);
-    performSearch(searchQuery, newFilters);
+    performSearch(searchQuery, newFilters, 1, sortBy);
   };
 
   const clearFilters = () => {
@@ -97,7 +97,7 @@ const SearchPage = () => {
     setFilters(clearedFilters);
     if (searchQuery.trim()) {
       updateUrlParams(searchQuery, clearedFilters);
-      performSearch(searchQuery, clearedFilters);
+      performSearch(searchQuery, clearedFilters, 1, sortBy);
     } else {
       // If no query and clearing filters, reset to empty state (or browse all?)
       // Let's reset to empty state if no query
@@ -119,18 +119,12 @@ const SearchPage = () => {
       params.delete('sort');
     }
     setSearchParams(params);
+    // Re-fetch with new sort order
+    performSearch(searchQuery, filters, 1, newSort);
   };
 
-  // Sort results client-side
-  const sortedResults = searchResponse?.results ?
-    sortBy === 'date'
-      ? [...searchResponse.results].sort((a, b) => {
-        const dateA = a.dateCreated || '';
-        const dateB = b.dateCreated || '';
-        return dateB.localeCompare(dateA); // Newest first
-      })
-      : [...searchResponse.results].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-    : [];
+  // Results are now sorted server-side
+  const sortedResults = searchResponse?.results || [];
 
   return (
     <div className="min-h-screen bg-parchment">

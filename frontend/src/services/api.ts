@@ -125,8 +125,8 @@ export const sparqlApi = {
 // Search API endpoints
 export const searchApi = {
   // Search artworks
-  search: (query: string, filters?: SearchFilters, page?: number, limit?: number) =>
-    api.get<SearchResponse>("/search", { params: { q: query, page, limit, ...filters } }),
+  search: (query: string, filters?: SearchFilters, page?: number, limit?: number, sort?: 'title' | 'date') =>
+    api.get<SearchResponse>("/search", { params: { q: query, page, limit, sort, ...filters } }),
 
   // Get recommendations for an artwork
   getRecommendations: (artworkId: string) =>
