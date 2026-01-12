@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     """Application settings."""
 
     # Fuseki configuration
+    fuseki_scheme: str = "http"
     fuseki_host: str
     fuseki_port: int
     fuseki_dataset: str
@@ -28,13 +29,13 @@ class Settings(BaseSettings):
     @property
     def fuseki_query_endpoint(self) -> str:
         return (
-            f"http://{self.fuseki_host}:{self.fuseki_port}/{self.fuseki_dataset}/query"
+            f"{self.fuseki_scheme}://{self.fuseki_host}:{self.fuseki_port}/{self.fuseki_dataset}/query"
         )
 
     @property
     def fuseki_update_endpoint(self) -> str:
         return (
-            f"http://{self.fuseki_host}:{self.fuseki_port}/{self.fuseki_dataset}/update"
+            f"{self.fuseki_scheme}://{self.fuseki_host}:{self.fuseki_port}/{self.fuseki_dataset}/update"
         )
 
     model_config = SettingsConfigDict(

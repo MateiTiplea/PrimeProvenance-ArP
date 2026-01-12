@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-f', 'Dockerfile.prod',
+      '--build-arg', 'VITE_API_BASE_URL=${_VITE_API_BASE_URL}',
+      '-t', 'gcr.io/$PROJECT_ID/arp-frontend',
+      '.'
+    ]
+images:
+  - 'gcr.io/$PROJECT_ID/arp-frontend'
+substitutions:
+  _VITE_API_BASE_URL: 'https://arp-backend-348542955632.europe-central2.run.app/api'
