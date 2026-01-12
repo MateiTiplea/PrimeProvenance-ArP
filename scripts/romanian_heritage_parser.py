@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Romanian Heritage XML to TTL Converter
+Romanian Heritage XML to TTL Converter.
 
 Parses LIDO XML files containing Romanian cultural heritage data,
 enriches with Wikidata/DBpedia, and generates RDF/TTL output
@@ -10,12 +10,14 @@ Usage:
     python romanian_heritage_parser.py --count 10
     python romanian_heritage_parser.py --all
     python romanian_heritage_parser.py --count 50 --output-dir ./output
+    python romanian_heritage_parser.py --download  # Download the dataset first
 """
 
 import argparse
 import re
 import sys
 import time
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -24,6 +26,14 @@ from lxml import etree
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DC, DCTERMS, OWL, RDF, RDFS, XSD
 from SPARQLWrapper import JSON, SPARQLWrapper
+from SPARQLWrapper.SPARQLExceptions import SPARQLWrapperException
+
+# Dataset download URL
+DATASET_URL = (
+    "https://data.gov.ro/storage/f/2014-02-02T14%3A21%3A08.284Z/"
+    "inp-clasate-arp-2014-02-02.xml"
+)
+DATASET_FILENAME = "inp-clasate-arp-2014-02-02.xml"
 
 # =============================================================================
 # NAMESPACE DEFINITIONS
@@ -176,7 +186,7 @@ class LIDOParser:
             str(self.xml_path), events=("end",), tag=f"{LIDO}lido"
         )
 
-        for event, elem in context:
+        for _, elem in context:
             artwork = self._parse_artwork_element(elem)
             if artwork:
                 artworks.append(artwork)
@@ -220,7 +230,7 @@ class LIDOParser:
 
             return artwork
 
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
             print(f"Warning: Error parsing artwork element: {e}", file=sys.stderr)
             return None
 
@@ -363,10 +373,16 @@ class LIDOParser:
 class DataEnricher:
     """Enriches data using Wikidata, DBpedia, and Getty SPARQL endpoints."""
 
-    def __init__(self, cache: ArtistCache):
+    def __init__(self, cache: ArtistCache, verbose: bool = True):
         self.cache = cache
+        self.verbose = verbose
         self._artwork_cache: Dict[str, Dict[str, Any]] = {}
         self._query_delay = 1.0  # Rate limiting
+
+    def _log_warning(self, message: str) -> None:
+        """Log a warning message if verbose mode is enabled."""
+        if self.verbose:
+            print(f"    ⚠ {message}", file=sys.stderr)
 
     def enrich_artist(self, artist_name: str) -> Dict[str, Any]:
         """
@@ -390,7 +406,7 @@ class DataEnricher:
             return self.cache.get(artist_name)
 
         # Normalize name format
-        normalized_name = self._normalize_artist_name(artist_name)
+        normalized_name = self.normalize_artist_name(artist_name)
 
         # Query Wikidata
         result = self._query_wikidata_artist(normalized_name)
@@ -435,7 +451,7 @@ class DataEnricher:
 
         # Try Wikidata search for artwork
         normalized_artist = (
-            self._normalize_artist_name(artist_name) if artist_name else None
+            self.normalize_artist_name(artist_name) if artist_name else None
         )
         wikidata_result = self._query_wikidata_artwork(title, normalized_artist)
         result.update(wikidata_result)
@@ -454,13 +470,17 @@ class DataEnricher:
             List of Getty AAT URIs applicable to this artwork
         """
         aat_uris = []
+        artwork_title = artwork.get("title", "Unknown")[:40]
 
         # Check object type
-        if artwork.get("object_type"):
-            obj_type = artwork["object_type"].lower()
+        obj_type = artwork.get("object_type", "")
+        obj_type_matched = False
+        if obj_type:
+            obj_type_lower = obj_type.lower()
             for key, uri in GETTY_AAT_MAPPINGS.items():
-                if key in obj_type:
+                if key in obj_type_lower:
                     aat_uris.append(uri)
+                    obj_type_matched = True
                     break
 
         # Check materials/technique
@@ -473,10 +493,24 @@ class DataEnricher:
             if key in combined and uri not in aat_uris:
                 aat_uris.append(uri)
 
+        # Log if no mappings found
+        if not aat_uris:
+            self._log_warning(f"Getty AAT: No vocabulary matches for '{artwork_title}'")
+            if obj_type:
+                self._log_warning(f"  Object type: '{obj_type}' (no mapping found)")
+            if material_text or technique_text:
+                self._log_warning(
+                    f"  Materials/technique: '{material_text}' / '{technique_text}'"
+                )
+        elif not obj_type_matched and obj_type:
+            self._log_warning(
+                f"Getty AAT: Object type '{obj_type}' has no mapping (only materials matched)"
+            )
+
         return aat_uris
 
     @staticmethod
-    def _normalize_artist_name(name: str) -> str:
+    def normalize_artist_name(name: str) -> str:
         """Convert 'Surname, FirstName' to 'FirstName Surname' format."""
         if "," in name:
             parts = name.split(",", 1)
@@ -540,12 +574,16 @@ class DataEnricher:
                 )
                 result["nationality"] = binding.get("nationalityLabel", {}).get("value")
                 result["description"] = binding.get("description", {}).get("value")
+            else:
+                self._log_warning(
+                    f"Wikidata: No artist found for '{artist_name}' "
+                    f"(searched: '{safe_name}'@en)"
+                )
 
-        except Exception as e:
-            print(
-                f"Warning: Wikidata artist query failed for '{artist_name}': {e}",
-                file=sys.stderr,
-            )
+        except SPARQLWrapperException as e:
+            self._log_warning(f"Wikidata artist query FAILED for '{artist_name}': {e}")
+            self._log_warning(f"  Endpoint: {WIKIDATA_ENDPOINT}")
+            self._log_warning(f'  Query pattern: rdfs:label "{safe_name}"@en')
 
         return result
 
@@ -559,10 +597,20 @@ class DataEnricher:
         safe_title = title.replace('"', '\\"')
 
         # Build query - artwork must be visual artwork or painting
+        # Include artist filter if provided for better accuracy
+        artist_filter = ""
+        if artist_name:
+            safe_artist = artist_name.replace('"', '\\"')
+            artist_filter = f"""
+          ?artwork wdt:P170 ?creator .
+          ?creator rdfs:label "{safe_artist}"@en .
+            """
+
         query = f"""
         SELECT ?artwork WHERE {{
-          ?artwork wdt:P31/wdt:P279* wd:Q838948 .  # instance of artwork or subclass
+          ?artwork wdt:P31/wdt:P279* wd:Q838948 .
           ?artwork rdfs:label ?label .
+          {artist_filter}
           FILTER(CONTAINS(LCASE(?label), LCASE("{safe_title}")))
           FILTER(LANG(?label) = "en" || LANG(?label) = "ro")
         }}
@@ -584,10 +632,15 @@ class DataEnricher:
 
             if bindings:
                 result["wikidata_uri"] = bindings[0].get("artwork", {}).get("value")
+            else:
+                self._log_warning(
+                    f"Wikidata: No artwork found for title '{title[:40]}...'"
+                    + (f" by '{artist_name}'" if artist_name else "")
+                )
 
-        except Exception as e:
-            # Artwork queries may often fail - don't spam warnings
-            pass
+        except SPARQLWrapperException as e:
+            self._log_warning(f"Wikidata artwork query FAILED for '{title[:40]}': {e}")
+            self._log_warning(f"  Endpoint: {WIKIDATA_ENDPOINT}")
 
         return result
 
@@ -653,12 +706,17 @@ class DataEnricher:
                     nat = binding.get("nationality", {}).get("value")
                     if nat:
                         result["nationality"] = nat.split("/")[-1].replace("_", " ")
+            else:
+                dbpedia_uri = f"http://dbpedia.org/resource/{dbpedia_name}"
+                self._log_warning(
+                    f"DBpedia: No artist found for '{artist_name}' "
+                    f"(tried: {dbpedia_uri})"
+                )
 
-        except Exception as e:
-            print(
-                f"Warning: DBpedia query failed for '{artist_name}': {e}",
-                file=sys.stderr,
-            )
+        except SPARQLWrapperException as e:
+            self._log_warning(f"DBpedia artist query FAILED for '{artist_name}': {e}")
+            self._log_warning(f"  Endpoint: {DBPEDIA_ENDPOINT}")
+            self._log_warning(f"  Attempted resource: dbr:{dbpedia_name}")
 
         return result
 
@@ -836,7 +894,7 @@ class RDFGenerator:
             self.graph.add((artwork_uri, ARP.currentOwner, owner_uri))
 
         # Build complete provenance chain
-        self._add_provenance_chain(artwork, artwork_uri, artist_enrichment)
+        self._add_provenance_chain(artwork, artwork_uri)
 
         return artwork_uri
 
@@ -853,7 +911,7 @@ class RDFGenerator:
             return self._artists[cache_key]
 
         # Create artist URI
-        normalized_name = DataEnricher._normalize_artist_name(artist_name)
+        normalized_name = DataEnricher.normalize_artist_name(artist_name)
         artist_uri = ARP[f"artist_{self._slugify(normalized_name)}"]
         self._artists[cache_key] = artist_uri
 
@@ -944,7 +1002,6 @@ class RDFGenerator:
         self,
         artwork: Dict[str, Any],
         artwork_uri: URIRef,
-        artist_enrichment: Dict[str, Any],
     ) -> List[URIRef]:
         """
         Build a complete provenance chain for the artwork.
@@ -989,7 +1046,7 @@ class RDFGenerator:
 
         # Creator as the first owner
         if artwork.get("creator"):
-            normalized_name = DataEnricher._normalize_artist_name(artwork["creator"])
+            normalized_name = DataEnricher.normalize_artist_name(artwork["creator"])
             artist_uri = ARP[f"artist_{self._slugify(normalized_name)}"]
             self.graph.add((creation_uri, ARP.toOwner, artist_uri))
 
@@ -1015,7 +1072,7 @@ class RDFGenerator:
         # =================================================================
         previous_owner = None
         if artwork.get("creator"):
-            normalized_name = DataEnricher._normalize_artist_name(artwork["creator"])
+            normalized_name = DataEnricher.normalize_artist_name(artwork["creator"])
             previous_owner = ARP[f"artist_{self._slugify(normalized_name)}"]
 
         if artwork.get("description"):
@@ -1238,13 +1295,13 @@ class RDFGenerator:
 
         return text
 
-    def serialize(self, format: str = "turtle") -> str:
+    def serialize(self, output_format: str = "turtle") -> str:
         """Serialize the graph to string."""
-        return self.graph.serialize(format=format)
+        return self.graph.serialize(format=output_format)
 
-    def save(self, path: Path, format: str = "turtle") -> None:
+    def save(self, path: Path, output_format: str = "turtle") -> None:
         """Save the graph to file."""
-        self.graph.serialize(destination=str(path), format=format)
+        self.graph.serialize(destination=str(path), format=output_format)
 
 
 # =============================================================================
@@ -1255,26 +1312,48 @@ class RDFGenerator:
 class RomanianHeritageConverter:
     """Main converter orchestrating the XML to TTL conversion process."""
 
+    # Batch size for incremental saves (save every N artworks)
+    BATCH_SIZE = 5
+
     def __init__(
         self,
         input_path: Path,
         output_dir: Path,
         artwork_count: Optional[int] = None,
         enable_enrichment: bool = True,
+        verbose: bool = True,
     ):
         self.input_path = input_path
         self.output_dir = output_dir
         self.artwork_count = artwork_count
         self.enable_enrichment = enable_enrichment
+        self.verbose = verbose
 
         self.parser = LIDOParser(input_path)
         self.cache = ArtistCache()
-        self.enricher = DataEnricher(self.cache) if enable_enrichment else None
+        self.enricher = (
+            DataEnricher(self.cache, verbose=verbose) if enable_enrichment else None
+        )
         self.rdf_generator = RDFGenerator()
+        self.output_path: Optional[Path] = None
+
+        # Enrichment statistics
+        self._stats = {
+            "artworks_processed": 0,
+            "artists_enriched_wikidata": 0,
+            "artists_enriched_dbpedia": 0,
+            "artists_not_found": 0,
+            "artworks_enriched_wikidata": 0,
+            "artworks_not_found": 0,
+            "getty_aat_linked": 0,
+            "getty_aat_not_found": 0,
+        }
 
     def convert(self) -> Path:
         """
-        Run the conversion process.
+        Run the conversion process with incremental saves.
+
+        Saves data in batches to preserve progress if the script crashes.
 
         Returns:
             Path to the generated TTL file
@@ -1285,60 +1364,211 @@ class RomanianHeritageConverter:
         artworks = self.parser.parse_artworks(limit=self.artwork_count)
         print(f"Parsed {len(artworks)} artworks")
 
-        # Process each artwork
-        for i, artwork in enumerate(artworks, 1):
-            print(
-                f"Processing artwork {i}/{len(artworks)}: {artwork.get('title', 'Unknown')[:50]}"
-            )
-
-            artist_enrichment = {}
-            artwork_enrichment = {}
-            getty_aat_uris = []
-
-            if self.enable_enrichment:
-                # Get Getty AAT URIs (always - works offline with mapping)
-                getty_aat_uris = self.enricher.get_getty_aat_uris(artwork)
-                if getty_aat_uris:
-                    print(f"  Getty AAT: {len(getty_aat_uris)} concept(s) linked")
-
-                # Enrich artist data from Wikidata AND DBpedia
-                if artwork.get("creator"):
-                    print(f"  Enriching artist: {artwork['creator']}")
-                    artist_enrichment = self.enricher.enrich_artist(artwork["creator"])
-                    if artist_enrichment.get("wikidata_uri"):
-                        print(f"    Wikidata: {artist_enrichment['wikidata_uri']}")
-                    if artist_enrichment.get("dbpedia_uri"):
-                        print(f"    DBpedia: {artist_enrichment['dbpedia_uri']}")
-
-                # Try to find artwork in Wikidata
-                artwork_enrichment = self.enricher.enrich_artwork(
-                    artwork.get("title", ""), artwork.get("creator")
-                )
-                if artwork_enrichment.get("wikidata_uri"):
-                    print(f"  Artwork Wikidata: {artwork_enrichment['wikidata_uri']}")
-            else:
-                # Even without enrichment, we can still map to Getty AAT
-                getty_aat_uris = self._get_getty_aat_offline(artwork)
-
-            # Add to RDF graph with all enrichment data
-            self.rdf_generator.add_artwork(
-                artwork, artist_enrichment, artwork_enrichment, getty_aat_uris
-            )
-
         # Generate output filename with timestamp
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         output_filename = f"romanian_data_{timestamp}.ttl"
-        output_path = self.output_dir / output_filename
+        self.output_path = self.output_dir / output_filename
 
         # Ensure output directory exists
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Save TTL file
-        print(f"Saving TTL file: {output_path}")
-        self.rdf_generator.save(output_path)
+        # Write TTL prefixes/header first
+        self._write_prefixes()
 
-        print(f"Conversion complete! Generated {len(artworks)} artwork records.")
-        return output_path
+        processed_count = 0
+
+        try:
+            # Process each artwork
+            for i, artwork in enumerate(artworks, 1):
+                title = artwork.get("title", "Unknown")[:50]
+                print(f"Processing artwork {i}/{len(artworks)}: {title}")
+
+                artist_enrichment = {}
+                artwork_enrichment = {}
+                getty_aat_uris = []
+
+                if self.enable_enrichment and self.enricher:
+                    # Get Getty AAT URIs (always - works offline with mapping)
+                    getty_aat_uris = self.enricher.get_getty_aat_uris(artwork)
+                    if getty_aat_uris:
+                        print(f"  ✓ Getty AAT: {len(getty_aat_uris)} concept(s) linked")
+                        self._stats["getty_aat_linked"] += 1
+                    else:
+                        self._stats["getty_aat_not_found"] += 1
+
+                    # Enrich artist data from Wikidata AND DBpedia
+                    if artwork.get("creator"):
+                        print(f"  Enriching artist: {artwork['creator']}")
+                        artist_enrichment = self.enricher.enrich_artist(
+                            artwork["creator"]
+                        )
+                        has_artist_link = False
+                        if artist_enrichment.get("wikidata_uri"):
+                            print(
+                                f"    ✓ Wikidata: {artist_enrichment['wikidata_uri']}"
+                            )
+                            self._stats["artists_enriched_wikidata"] += 1
+                            has_artist_link = True
+                        if artist_enrichment.get("dbpedia_uri"):
+                            print(f"    ✓ DBpedia: {artist_enrichment['dbpedia_uri']}")
+                            self._stats["artists_enriched_dbpedia"] += 1
+                            has_artist_link = True
+                        if not has_artist_link:
+                            self._stats["artists_not_found"] += 1
+
+                    # Try to find artwork in Wikidata
+                    artwork_enrichment = self.enricher.enrich_artwork(
+                        artwork.get("title", ""), artwork.get("creator")
+                    )
+                    if artwork_enrichment.get("wikidata_uri"):
+                        print(
+                            f"  ✓ Artwork Wikidata: {artwork_enrichment['wikidata_uri']}"
+                        )
+                        self._stats["artworks_enriched_wikidata"] += 1
+                    else:
+                        self._stats["artworks_not_found"] += 1
+                else:
+                    # Even without enrichment, we can still map to Getty AAT
+                    getty_aat_uris = self._get_getty_aat_offline(artwork)
+
+                # Add to RDF graph with all enrichment data
+                self.rdf_generator.add_artwork(
+                    artwork, artist_enrichment, artwork_enrichment, getty_aat_uris
+                )
+                processed_count += 1
+                self._stats["artworks_processed"] = processed_count
+
+                # Save incrementally every BATCH_SIZE artworks
+                if processed_count % self.BATCH_SIZE == 0:
+                    self._append_graph_to_file()
+                    print(f"  [Saved batch - {processed_count} artworks to disk]")
+
+        finally:
+            # Always save remaining triples, even if an error occurred
+            if len(self.rdf_generator.graph) > 0:
+                self._append_graph_to_file()
+                print("  [Final save - ensuring all data is written to disk]")
+
+        # Print enrichment summary
+        self._print_enrichment_summary()
+
+        print(f"\nOutput saved to: {self.output_path}")
+        return self.output_path
+
+    def _print_enrichment_summary(self) -> None:
+        """Print a summary of enrichment results."""
+        stats = self._stats
+        total = stats["artworks_processed"]
+
+        print("\n" + "=" * 60)
+        print("ENRICHMENT SUMMARY")
+        print("=" * 60)
+        print(f"Total artworks processed: {total}")
+
+        if self.enable_enrichment:
+            print("\n📊 Artist Enrichment:")
+            wd_artists = stats["artists_enriched_wikidata"]
+            db_artists = stats["artists_enriched_dbpedia"]
+            no_artists = stats["artists_not_found"]
+            print(f"  ✓ Wikidata links found: {wd_artists}")
+            print(f"  ✓ DBpedia links found:  {db_artists}")
+            if no_artists > 0:
+                print(f"  ✗ Artists not found:    {no_artists}")
+
+            print("\n📊 Artwork Enrichment:")
+            wd_artworks = stats["artworks_enriched_wikidata"]
+            no_artworks = stats["artworks_not_found"]
+            print(f"  ✓ Wikidata links found: {wd_artworks}")
+            if no_artworks > 0:
+                print(f"  ✗ Artworks not found:   {no_artworks}")
+
+            print("\n📊 Getty AAT Vocabulary:")
+            aat_linked = stats["getty_aat_linked"]
+            aat_not_found = stats["getty_aat_not_found"]
+            print(f"  ✓ Artworks with AAT links: {aat_linked}")
+            if aat_not_found > 0:
+                print(f"  ✗ No AAT mappings found:   {aat_not_found}")
+
+            # Calculate success rates
+            if total > 0:
+                print("\n📈 Success Rates:")
+                artist_rate = (
+                    (wd_artists + db_artists)
+                    / (wd_artists + db_artists + no_artists)
+                    * 100
+                    if (wd_artists + db_artists + no_artists) > 0
+                    else 0
+                )
+                artwork_rate = (
+                    wd_artworks / (wd_artworks + no_artworks) * 100
+                    if (wd_artworks + no_artworks) > 0
+                    else 0
+                )
+                aat_rate = (
+                    aat_linked / (aat_linked + aat_not_found) * 100
+                    if (aat_linked + aat_not_found) > 0
+                    else 0
+                )
+                print(f"  Artist enrichment:  {artist_rate:.1f}%")
+                print(f"  Artwork enrichment: {artwork_rate:.1f}%")
+                print(f"  Getty AAT mapping:  {aat_rate:.1f}%")
+
+        print("=" * 60)
+
+    def _write_prefixes(self) -> None:
+        """Write TTL prefixes to the output file."""
+        prefixes = (
+            """@prefix arp: <http://example.org/arp#> .
+@prefix aat: <http://vocab.getty.edu/aat/> .
+@prefix crm: <http://www.cidoc-crm.org/cidoc-crm/> .
+@prefix dbr: <http://dbpedia.org/resource/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix wd: <http://www.wikidata.org/entity/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Romanian Heritage Data - Generated by romanian_heritage_parser.py
+# Timestamp: """
+            + datetime.now().isoformat()
+            + """
+
+"""
+        )
+        with open(self.output_path, "w", encoding="utf-8") as f:
+            f.write(prefixes)
+
+    def _append_graph_to_file(self) -> None:
+        """Append current graph triples to file and clear the graph."""
+        if not self.output_path or len(self.rdf_generator.graph) == 0:
+            return
+
+        # Serialize current graph (without prefixes since we wrote them already)
+        ttl_content = self.rdf_generator.graph.serialize(format="turtle")
+
+        # Remove prefix declarations from serialized content (already in file)
+        lines = ttl_content.split("\n")
+        content_lines = []
+        in_prefix_section = True
+        for line in lines:
+            if in_prefix_section and (line.startswith("@prefix") or line.strip() == ""):
+                continue
+            in_prefix_section = False
+            content_lines.append(line)
+
+        content = "\n".join(content_lines)
+
+        # Append to file
+        with open(self.output_path, "a", encoding="utf-8") as f:
+            f.write(content)
+            f.write("\n\n")
+
+        # Clear the graph for next batch
+        self.rdf_generator = RDFGenerator()
 
     @staticmethod
     def _get_getty_aat_offline(artwork: Dict[str, Any]) -> List[str]:
@@ -1367,6 +1597,64 @@ class RomanianHeritageConverter:
 
 
 # =============================================================================
+# DATASET DOWNLOAD
+# =============================================================================
+
+
+def download_dataset(output_dir: Path) -> Path:
+    """
+    Download the Romanian heritage dataset from data.gov.ro.
+
+    Args:
+        output_dir: Directory to save the downloaded file
+
+    Returns:
+        Path to the downloaded file
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / DATASET_FILENAME
+
+    if output_path.exists():
+        print(f"Dataset already exists: {output_path}")
+        return output_path
+
+    print(f"Downloading dataset from {DATASET_URL}...")
+    print("This may take a few minutes (file is ~31MB)...")
+
+    try:
+        # Create a request with proper headers
+        request = urllib.request.Request(
+            DATASET_URL,
+            headers={"User-Agent": "RomanianHeritageParser/1.0"},
+        )
+
+        with urllib.request.urlopen(request, timeout=300) as response:
+            total_size = int(response.headers.get("content-length", 0))
+            downloaded = 0
+            chunk_size = 8192
+
+            with open(output_path, "wb") as out_file:
+                while True:
+                    chunk = response.read(chunk_size)
+                    if not chunk:
+                        break
+                    out_file.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size:
+                        pct = (downloaded / total_size) * 100
+                        print(f"\rProgress: {pct:.1f}%", end="", flush=True)
+
+        print(f"\nDownload complete: {output_path}")
+        return output_path
+
+    except urllib.error.URLError as e:
+        print(f"Error downloading dataset: {e}", file=sys.stderr)
+        if output_path.exists():
+            output_path.unlink()
+        raise
+
+
+# =============================================================================
 # CLI ARGUMENT PARSING
 # =============================================================================
 
@@ -1378,10 +1666,11 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  %(prog)s --download                    # Download the dataset first
   %(prog)s --count 10                    # Convert first 10 artworks
   %(prog)s --all                         # Convert all artworks
-  %(prog)s --count 50 --no-enrichment    # Convert 50 artworks without SPARQL enrichment
-  %(prog)s --all --output-dir ./output   # Convert all and save to ./output directory
+  %(prog)s --count 50 --no-enrichment    # Convert 50 without SPARQL enrichment
+  %(prog)s --all --output-dir ./output   # Convert all and save to ./output
         """,
     )
 
@@ -1392,16 +1681,19 @@ Examples:
     group.add_argument(
         "--all", "-a", action="store_true", help="Convert all artworks in the XML file"
     )
+    group.add_argument(
+        "--download",
+        "-d",
+        action="store_true",
+        help="Download the dataset from data.gov.ro",
+    )
 
     parser.add_argument(
         "--input",
         "-i",
         type=Path,
-        default=Path(__file__).parent.parent
-        / "data"
-        / "raw"
-        / "inp-clasate-arp-2014-02-02.xml",
-        help="Path to input LIDO XML file (default: data/raw/inp-clasate-arp-2014-02-02.xml)",
+        default=Path(__file__).parent.parent / "data" / "raw" / DATASET_FILENAME,
+        help=f"Path to input LIDO XML file (default: data/raw/{DATASET_FILENAME})",
     )
 
     parser.add_argument(
@@ -1430,9 +1722,19 @@ def main() -> int:
     """Main entry point."""
     args = parse_arguments()
 
+    # Handle download-only mode
+    if args.download:
+        raw_dir = Path(__file__).parent.parent / "data" / "raw"
+        try:
+            download_dataset(raw_dir)
+            return 0
+        except urllib.error.URLError:
+            return 1
+
     # Validate input file
     if not args.input.exists():
         print(f"Error: Input file not found: {args.input}", file=sys.stderr)
+        print("Run with --download to download the dataset first.", file=sys.stderr)
         return 1
 
     # Determine artwork count
@@ -1453,7 +1755,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\nConversion interrupted by user.")
         return 130
-    except Exception as e:
+    except (OSError, ValueError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
