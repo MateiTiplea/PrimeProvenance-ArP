@@ -30,7 +30,7 @@
 </p>
    
 <h4>
-    <a href="#camera-screenshots">View Demo</a>
+    <a href="https://www.youtube.com/watch?v=PuDslfFO_Ik">View Demo</a>
   <span> · </span>
     <a href="#toolbox-getting-started">Documentation</a>
   <span> · </span>
