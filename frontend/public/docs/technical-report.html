@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimeProvenance-ArP Technical Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ArP Theme Variables */
+        :root {
+            --color-parchment: #f5f1e8;
+            --color-parchment-dark: #e8e0d0;
+            --color-ivory: #fffff8;
+            --color-charcoal: #2c2c2c;
+            --color-charcoal-light: #4a4a4a;
+            --color-gold: #c9a227;
+            --color-gold-dark: #a68520;
+            --color-gold-light: #e0c35a;
+            --color-burgundy: #722f37;
+            --color-burgundy-dark: #5a252c;
+            --color-bronze: #8b7355;
+            --color-bronze-light: #a69076;
+
+            --font-heading: "Cormorant Garamond", "Palatino Linotype", "Book Antiqua", serif;
+            --font-body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+            --font-mono: "JetBrains Mono", "Fira Code", monospace;
+        }
+
+        /* Base Styles */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-parchment);
+            color: var(--color-charcoal);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* Header / Hero */
+        header {
+            background: linear-gradient(to bottom right, var(--color-charcoal), var(--color-burgundy-dark));
+            color: var(--color-ivory);
+            padding: 3rem 1rem 4rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-family: var(--font-heading);
+            font-size: 2.75rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem;
+        }
+
+        header h1 span {
+            background: linear-gradient(to right, var(--color-gold), var(--color-gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header .subtitle {
+            font-size: 1.1rem;
+            color: rgba(245, 241, 232, 0.8);
+            margin-bottom: 1rem;
+        }
+
+        header .meta {
+            font-size: 0.9rem;
+            color: rgba(245, 241, 232, 0.6);
+        }
+
+        /* Navigation TOC */
+        nav#toc {
+            background: var(--color-ivory);
+            border: 1px solid rgba(139, 115, 85, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem 2rem;
+            margin: 2rem auto;
+            max-width: 700px;
+        }
+
+        nav#toc h2 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            margin: 0 0 1rem;
+            color: var(--color-charcoal);
+        }
+
+        nav#toc ol {
+            padding-left: 1.25rem;
+            margin: 0;
+        }
+
+        nav#toc li {
+            margin-bottom: 0.5rem;
+        }
+
+        nav#toc a {
+            color: var(--color-burgundy);
+            text-decoration: none;
+        }
+
+        nav#toc a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content Container */
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        /* Sections */
+        section {
+            background-color: var(--color-ivory);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(139, 115, 85, 0.2);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--color-charcoal);
+            border-bottom: 1px solid rgba(139, 115, 85, 0.3);
+            padding-bottom: 0.5rem;
+            margin: 0 0 1.25rem;
+        }
+
+        h3 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-charcoal);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        h4 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-charcoal-light);
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        p {
+            color: var(--color-charcoal-light);
+            margin: 0 0 1rem;
+        }
+
+        ul,
+        ol {
+            color: var(--color-charcoal-light);
+            padding-left: 1.5rem;
+            margin: 0 0 1rem;
+        }
+
+        li {
+            margin-bottom: 0.4rem;
+        }
+
+        strong {
+            color: var(--color-charcoal);
+        }
+
+        /* Code Styling */
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.875em;
+            background-color: var(--color-parchment);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            color: var(--color-burgundy);
+        }
+
+        pre {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            background-color: var(--color-charcoal);
+            color: var(--color-parchment);
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--color-parchment-dark);
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--color-parchment);
+            color: var(--color-charcoal);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--color-charcoal-light);
+        }
+
+        /* Figures */
+        .figure {
+            text-align: center;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background-color: var(--color-parchment);
+            border-radius: 0.5rem;
+            border: 1px solid rgba(139, 115, 85, 0.2);
+        }
+
+        .figure img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.25rem;
+        }
+
+        .caption {
+            font-style: italic;
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--color-bronze);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--color-bronze);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--color-parchment-dark);
+            margin-top: 2rem;
+        }
+
+        ::selection {
+            background-color: var(--color-gold-light);
+            color: var(--color-charcoal);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-parchment-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-bronze);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-bronze-light);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Artwork Provenance Platform <span>(ArP)</span></h1>
+        <p class="subtitle">Technical Report &amp; System Documentation</p>
+        <div class="meta">ArP Development Team &mdash; January 2026</div>
+    </header>
+
+    <nav id="toc">
+        <h2>Table of Contents</h2>
+        <ol>
+            <li><a href="#abstract">Abstract</a></li>
+            <li><a href="#architecture">System Architecture</a></li>
+            <li><a href="#data-models">Internal Data Structures &amp; Models</a></li>
+            <li><a href="#api-documentation">REST API Implementation</a></li>
+            <li><a href="#rdf-knowledge">RDF-Based Knowledge Model</a></li>
+            <li><a href="#external-sources">External Data Sources &amp; SPARQL Integration</a></li>
+            <li><a href="#linked-data">Linked Data Conformance</a></li>
+            <li><a href="#video-demo">Video Demonstration</a></li>
+            <li><a href="#references">References</a></li>
+        </ol>
+    </nav>
+
+    <main>
+        <!-- SECTION 1: ABSTRACT -->
+        <section id="abstract">
+            <h2>1. Abstract</h2>
+            <p>
+                The Artwork Provenance Platform (ArP) is a Semantic Web-based system designed to manage, track, and
+                analyze the provenance of art objects.
+                By leveraging strict ontology-based data modeling and Linked Data principles, ArP enables interoperable
+                exchange of cultural heritage data.
+                This technical report documents the system's architecture, internal data structures, API specifications,
+                RDF knowledge models,
+                and conformance to Linked Data standards, demonstrating its capability to integrate with external
+                knowledge bases
+                like DBpedia, Wikidata, and the Getty Art &amp; Architecture Thesaurus.
+            </p>
+            <p>
+                The platform serves researchers, museum curators, and art enthusiasts by providing a rich,
+                interconnected view of artwork histories,
+                ownership chains, and cultural significance. Through its use of semantic technologies, ArP transforms
+                disparate art historical data
+                into a cohesive, queryable knowledge graph.
+            </p>
+        </section>
+
+        <!-- SECTION 2: ARCHITECTURE -->
+        <section id="architecture">
+            <h2>2. System Architecture</h2>
+
+            <h3>2.1 Overview</h3>
+            <p>
+                ArP follows a modern three-tier architecture with clear separation of concerns. The system is
+                containerized using Docker,
+                enabling consistent deployment across environments. Each component communicates through well-defined
+                interfaces:
+                REST/JSON between frontend and backend, and SPARQL between backend and the triple store.
+            </p>
+
+            <h4>Component Summary</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Technology</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Frontend</td>
+                        <td>React 18, TypeScript, Tailwind CSS</td>
+                        <td>User interface, SPA with client-side routing</td>
+                    </tr>
+                    <tr>
+                        <td>Backend</td>
+                        <td>Python 3.11, FastAPI, Pydantic</td>
+                        <td>REST API, business logic, SPARQL translation</td>
+                    </tr>
+                    <tr>
+                        <td>Triple Store</td>
+                        <td>Apache Jena Fuseki 4.x</td>
+                        <td>RDF storage, SPARQL 1.1 query/update endpoint</td>
+                    </tr>
+                    <tr>
+                        <td>External APIs</td>
+                        <td>DBpedia, Wikidata, Getty SPARQL</td>
+                        <td>Linked Open Data enrichment</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="figure">
+                <img src="images/architecture.png" alt="System Architecture Diagram">
+                <div class="caption">Figure 1: High-level system architecture showing data flow between components.
+                </div>
+            </div>
+
+            <h3>2.2 Frontend Architecture</h3>
+            <p>
+                The frontend is a Single Page Application (SPA) built with <strong>React 18</strong> and
+                <strong>TypeScript</strong>.
+                It uses <strong>React Router v6</strong> for client-side navigation and <strong>TanStack Query</strong>
+                for server state management
+                with automatic caching and background refetching. The design system is built on <strong>Tailwind CSS
+                    v4</strong> with custom
+                theme variables for a gallery-inspired aesthetic.
+            </p>
+            <p>
+                Key pages include the <em>Artwork Gallery</em>, <em>Artwork Detail</em> with provenance timeline,
+                <em>SPARQL Explorer</em>,
+                <em>Search</em> with faceted filtering, and <em>Statistics Dashboard</em>. All pages implement
+                responsive design
+                and accessibility best practices.
+            </p>
+
+            <!-- SCREENSHOT: Gallery/Search Page -->
+            <div class="figure">
+                <!-- TODO: Replace with actual screenshot -->
+                <div
+                    style="background: linear-gradient(135deg, #e8e0d0 0%, #f5f1e8 100%); height: 300px; display: flex; align-items: center; justify-content: center; border: 2px dashed #8b7355; border-radius: 0.5rem;">
+                    <span style="color: #8b7355; font-size: 1.1rem;">📷 Screenshot: Artwork Gallery / Search
+                        Page<br><small>images/screenshot-gallery.png</small></span>
+                </div>
+                <div class="caption">Figure 2: Artwork Gallery with integrated search and filtering options.
+                </div>
+            </div>
+
+
+            <!-- SCREENSHOT: Artwork Detail -->
+            <div class="figure">
+                <!-- TODO: Replace with actual screenshot -->
+                <div
+                    style="background: linear-gradient(135deg, #e8e0d0 0%, #f5f1e8 100%); height: 300px; display: flex; align-items: center; justify-content: center; border: 2px dashed #8b7355; border-radius: 0.5rem;">
+                    <span style="color: #8b7355; font-size: 1.1rem;">📷 Screenshot: Artwork Detail
+                        Page<br><small>images/screenshot-artwork-detail.png</small></span>
+                </div>
+                <div class="caption">Figure 3: Artwork detail view with metadata and provenance timeline.</div>
+            </div>
+
+            <!-- SCREENSHOT: Provenance Timeline -->
+            <div class="figure">
+                <!-- TODO: Replace with actual screenshot -->
+                <div
+                    style="background: linear-gradient(135deg, #e8e0d0 0%, #f5f1e8 100%); height: 300px; display: flex; align-items: center; justify-content: center; border: 2px dashed #8b7355; border-radius: 0.5rem;">
+                    <span style="color: #8b7355; font-size: 1.1rem;">📷 Screenshot: Provenance
+                        Timeline<br><small>images/screenshot-provenance.png</small></span>
+                </div>
+                <div class="caption">Figure 4: Provenance timeline showing ownership history chain.</div>
+            </div>
+
+            <!-- SCREENSHOT: SPARQL Explorer -->
+            <div class="figure">
+                <!-- TODO: Replace with actual screenshot -->
+                <div
+                    style="background: linear-gradient(135deg, #e8e0d0 0%, #f5f1e8 100%); height: 300px; display: flex; align-items: center; justify-content: center; border: 2px dashed #8b7355; border-radius: 0.5rem;">
+                    <span style="color: #8b7355; font-size: 1.1rem;">📷 Screenshot: SPARQL
+                        Explorer<br><small>images/screenshot-sparql.png</small></span>
+                </div>
+                <div class="caption">Figure 5: SPARQL Explorer with query editor and results view.</div>
+            </div>
+
+            <!-- SCREENSHOT: External Enrichment -->
+            <div class="figure">
+                <!-- TODO: Replace with actual screenshot -->
+                <div
+                    style="background: linear-gradient(135deg, #e8e0d0 0%, #f5f1e8 100%); height: 300px; display: flex; align-items: center; justify-content: center; border: 2px dashed #8b7355; border-radius: 0.5rem;">
+                    <span style="color: #8b7355; font-size: 1.1rem;">📷 Screenshot: External Enrichment
+                        Panel<br><small>images/screenshot-enrichment.png</small></span>
+                </div>
+                <div class="caption">Figure 6: External data enrichment from DBpedia/Wikidata.</div>
+            </div>
+
+
+            <h3>2.3 Backend Architecture</h3>
+            <p>
+                The backend is organized following a service-oriented architecture:
+            </p>
+            <ul>
+                <li><strong>Routers</strong>: FastAPI routers define HTTP endpoints, handle request validation via
+                    Pydantic, and delegate to services.</li>
+                <li><strong>Services</strong>: Business logic layer that constructs SPARQL queries, processes results,
+                    and manages caching.</li>
+                <li><strong>Models</strong>: Pydantic models for request/response validation and JSON-LD context
+                    injection.</li>
+                <li><strong>Config</strong>: Centralized configuration via environment variables with sensible defaults.
+                </li>
+            </ul>
+            <pre><code>backend/app/
+├── routers/
+│   ├── artworks.py       # Artwork CRUD endpoints
+│   ├── provenance.py     # Provenance chain management
+│   ├── sparql.py         # Direct SPARQL query endpoint
+│   ├── search.py         # Full-text search
+│   ├── external.py       # External enrichment APIs
+│   └── statistics.py     # Analytics endpoints
+├── services/
+│   ├── artwork_service.py
+│   ├── sparql_service.py
+│   ├── external_sparql_service.py
+│   └── statistics_service.py
+├── models/
+│   ├── artwork.py
+│   └── provenance.py
+└── config.py</code></pre>
+
+            <h3>2.4 Data Store: Apache Jena Fuseki</h3>
+            <p>
+                Fuseki serves as the primary data store, configured with TDB2 for persistent storage.
+                It exposes both query (<code>/query</code>) and update (<code>/update</code>) endpoints.
+                The dataset is preloaded with the ArP ontology definition and sample artwork data in Turtle format.
+            </p>
+        </section>
+
+        <!-- SECTION 3: DATA MODELS -->
+        <section id="data-models">
+            <h2>3. Internal Data Structures &amp; Models</h2>
+
+            <h3>3.1 Pydantic Models Overview</h3>
+            <p>
+                The backend uses Pydantic v2 for all data validation, serialization, and JSON-LD context injection.
+                Models are strictly typed with optional fields supporting partial updates.
+            </p>
+
+            <h4>Artwork Models</h4>
+            <p>The <code>ArtworkBase</code> class defines the core properties shared across create, update, and response
+                operations:</p>
+            <pre><code>class ArtworkBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    artist: Optional[str] = None
+    dateCreated: Optional[str] = None
+    medium: Optional[str] = None
+    dimensions: Optional[str] = None
+    description: Optional[str] = None
+    imageUrl: Optional[str] = None
+    currentLocation: Optional[str] = None
+    period: Optional[str] = None
+    style: Optional[str] = None</code></pre>
+
+            <p>The <code>ArtworkResponse</code> extends this with additional fields for API responses:</p>
+            <ul>
+                <li><code>id</code>: Unique identifier (derived from RDF URI local name)</li>
+                <li><code>externalLinks</code>: Optional links to DBpedia, Wikidata, and Getty AAT</li>
+                <li><code>@context</code>: JSON-LD context mapping property names to RDF predicates</li>
+                <li><code>@type</code>: JSON-LD type declaration ("Artwork")</li>
+            </ul>
+
+            <h4>Provenance Models</h4>
+            <p>Provenance events are typed using an enumeration to ensure data consistency:</p>
+            <pre><code>class ProvenanceEventType(str, Enum):
+    CREATION = "Creation"
+    SALE = "Sale"
+    GIFT = "Gift"
+    BEQUEST = "Bequest"
+    THEFT = "Theft"
+    RECOVERY = "Recovery"
+    LOAN = "Loan"
+    RETURN = "Return"
+    ACQUISITION = "Acquisition"
+    COMMISSION = "Commission"
+    INHERITANCE = "Inheritance"
+    TRANSFER = "Transfer"
+    NATIONALIZATION = "Nationalization"</code></pre>
+
+            <p>The <code>ProvenanceRecord</code> model captures a single event in the chain:</p>
+            <pre><code>class ProvenanceRecord(BaseModel):
+    id: str
+    event: str
+    date: Optional[str] = None
+    owner: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    sourceUri: Optional[str] = None
+    order: Optional[int] = None</code></pre>
+
+            <h4>Search &amp; Faceting Models</h4>
+            <p>The search functionality returns results with facet counts for filtering:</p>
+            <pre><code>class SearchFacets(BaseModel):
+    artists: List[FacetItem] = []
+    periods: List[FacetItem] = []
+    media: List[FacetItem] = []
+    locations: List[FacetItem] = []
+
+class SearchResponse(BaseModel):
+    query: str
+    total: int
+    page: int
+    limit: int
+    results: List[Dict[str, Any]]
+    facets: Optional[SearchFacets] = None</code></pre>
+
+            <h3>3.2 JSON-LD Context</h3>
+            <p>
+                All API responses include a JSON-LD <code>@context</code> that maps human-readable property names to
+                their corresponding RDF predicates, enabling clients to interpret responses as valid Linked Data:
+            </p>
+            <pre><code>JSONLD_CONTEXT = {
+    "@vocab": "http://example.org/arp#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcterms": "http://purl.org/dc/terms/",
+    "schema": "http://schema.org/",
+    "title": "dc:title",
+    "artist": "schema:name",
+    "dateCreated": "dcterms:created",
+    "medium": "arp:artworkMedium",
+    "imageUrl": "schema:image"
+}</code></pre>
+        </section>
+
+        <!-- SECTION 4: API DOCUMENTATION -->
+        <section id="api-documentation">
+            <h2>4. REST API Implementation</h2>
+
+            <h3>4.1 Design Principles</h3>
+            <p>
+                The API follows RESTful conventions with OpenAPI 3.1.0 specification. Key design decisions include:
+            </p>
+            <ul>
+                <li><strong>Resource-oriented URLs</strong>: <code>/api/artworks</code>,
+                    <code>/api/artworks/{id}/provenance</code>
+                </li>
+                <li><strong>Standard HTTP methods</strong>: GET, POST, PUT, DELETE with appropriate status codes</li>
+                <li><strong>Pagination</strong>: Offset-based with <code>page</code> and <code>limit</code> parameters
+                </li>
+                <li><strong>Content negotiation</strong>: JSON responses with JSON-LD context</li>
+                <li><strong>Error handling</strong>: Consistent error response format with status codes 400, 404, 422,
+                    500</li>
+            </ul>
+
+            <h3>4.2 Core Endpoints</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/artworks</td>
+                        <td>List artworks with filters (artist, period, search)</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/artworks</td>
+                        <td>Create new artwork</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/artworks/{id}</td>
+                        <td>Get artwork details with external links</td>
+                    </tr>
+                    <tr>
+                        <td>PUT</td>
+                        <td>/api/artworks/{id}</td>
+                        <td>Update artwork</td>
+                    </tr>
+                    <tr>
+                        <td>DELETE</td>
+                        <td>/api/artworks/{id}</td>
+                        <td>Delete artwork and provenance</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/artworks/{id}/provenance</td>
+                        <td>Get provenance chain</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/artworks/{id}/provenance</td>
+                        <td>Add provenance event</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/sparql</td>
+                        <td>Execute custom SPARQL query</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/search?q=...</td>
+                        <td>Full-text search</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/artworks/{id}/enrich</td>
+                        <td>Fetch external enrichment data</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>4.3 SPARQL Query Translation</h3>
+            <p>
+                The backend translates REST requests into SPARQL queries dynamically. For example, listing artworks with
+                filters:
+            </p>
+            <pre><code>PREFIX dc: &lt;http://purl.org/dc/elements/1.1/&gt;
+PREFIX arp: &lt;http://example.org/arp#&gt;
+PREFIX schema: &lt;http://schema.org/&gt;
+
+SELECT DISTINCT ?artwork ?title ?artist ?period
+WHERE {
+    ?artwork a arp:Artwork .
+    ?artwork dc:title ?title .
+    FILTER(LANG(?title) = "en")
+    
+    OPTIONAL { ?artwork dc:creator ?artistUri . 
+               ?artistUri schema:name ?artist }
+    OPTIONAL { ?artwork arp:artworkPeriod ?period }
+    
+    # Dynamic filter injection
+    FILTER(CONTAINS(LCASE(?artist), "monet"))
+}
+ORDER BY ?title
+LIMIT 20 OFFSET 0</code></pre>
+
+            <h3>4.4 Update Operations</h3>
+            <p>
+                Create and update operations use SPARQL INSERT DATA and DELETE/INSERT patterns.
+                The service layer escapes special characters and validates input before constructing queries:
+            </p>
+            <pre><code>PREFIX arp: &lt;http://example.org/arp#&gt;
+
+DELETE { &lt;artwork_uri&gt; arp:artworkMedium ?oldMedium }
+INSERT { &lt;artwork_uri&gt; arp:artworkMedium "Oil on canvas" }
+WHERE {
+    &lt;artwork_uri&gt; a arp:Artwork .
+    OPTIONAL { &lt;artwork_uri&gt; arp:artworkMedium ?oldMedium }
+}</code></pre>
+        </section>
+
+        <!-- SECTION 5: RDF KNOWLEDGE MODEL -->
+        <section id="rdf-knowledge">
+            <h2>5. RDF-Based Knowledge Model</h2>
+
+            <h3>5.1 Ontology Design</h3>
+            <p>
+                The ArP ontology (namespace: <code>http://example.org/arp#</code>) extends and aligns with established
+                vocabularies
+                to maximize interoperability and leverage existing tooling.
+            </p>
+
+            <h4>Vocabulary Alignment</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ArP Class</th>
+                        <th>Aligned With</th>
+                        <th>Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>arp:Artwork</td>
+                        <td>schema:VisualArtwork, crm:E22_Human-Made_Object</td>
+                        <td>Schema.org for web discovery, CIDOC-CRM for museum interoperability</td>
+                    </tr>
+                    <tr>
+                        <td>arp:Artist</td>
+                        <td>schema:Person, crm:E21_Person</td>
+                        <td>Standard person representation</td>
+                    </tr>
+                    <tr>
+                        <td>arp:ProvenanceEvent</td>
+                        <td>prov:Activity, crm:E8_Acquisition</td>
+                        <td>PROV-O for provenance tracking, CIDOC-CRM for acquisition semantics</td>
+                    </tr>
+                    <tr>
+                        <td>arp:Location</td>
+                        <td>schema:Place, crm:E53_Place</td>
+                        <td>Geographic location modeling</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>5.2 Property Definitions</h3>
+            <p>
+                Properties are designed to capture both descriptive metadata and provenance relationships:
+            </p>
+
+            <h4>Object Properties (Relationships)</h4>
+            <ul>
+                <li><code>arp:hasProvenanceEvent</code> — Links artwork to provenance events (1:N)</li>
+                <li><code>arp:fromOwner</code> / <code>arp:toOwner</code> — Ownership transfer participants</li>
+                <li><code>arp:currentOwner</code> — Current owner reference</li>
+                <li><code>arp:currentLocation</code> — Physical location of artwork</li>
+                <li><code>owl:sameAs</code> — Identity links to external knowledge bases</li>
+            </ul>
+
+            <h4>Datatype Properties</h4>
+            <ul>
+                <li><code>arp:provenanceOrder</code> (xsd:integer) — Sequence number in provenance chain</li>
+                <li><code>arp:eventType</code> (xsd:string) — Enumerated event type</li>
+                <li><code>arp:artworkMedium</code> (xsd:string) — Materials and techniques</li>
+                <li><code>arp:artworkPeriod</code> (xsd:string) — Art historical period</li>
+            </ul>
+
+            <h3>5.3 Sample RDF Data</h3>
+            <pre><code>@prefix arp: &lt;http://example.org/arp#&gt; .
+@prefix dc: &lt;http://purl.org/dc/elements/1.1/&gt; .
+@prefix schema: &lt;http://schema.org/&gt; .
+@prefix owl: &lt;http://www.w3.org/2002/07/owl#&gt; .
+
+arp:artwork_starry_night a arp:Artwork, schema:Painting ;
+    dc:title "The Starry Night"@en ;
+    dc:creator arp:artist_van_gogh ;
+    arp:artworkMedium "Oil on canvas" ;
+    arp:artworkPeriod "Post-Impressionism" ;
+    arp:currentLocation arp:location_moma ;
+    schema:artMedium &lt;http://vocab.getty.edu/aat/300015050&gt; ;
+    owl:sameAs &lt;http://dbpedia.org/resource/The_Starry_Night&gt; ,
+               &lt;http://www.wikidata.org/entity/Q45585&gt; .</code></pre>
+
+            <h3>5.4 Expressiveness &amp; Usage</h3>
+            <p>
+                The ontology is intentionally pragmatic rather than maximally expressive. Key design decisions:
+            </p>
+            <ul>
+                <li><strong>Open World Assumption</strong>: Optional properties allow incomplete data</li>
+                <li><strong>Multilingual Support</strong>: Language-tagged literals for titles and descriptions</li>
+                <li><strong>External Linking</strong>: <code>owl:sameAs</code> enables data enrichment without
+                    duplication</li>
+                <li><strong>Getty AAT Integration</strong>: <code>schema:artMedium</code> links to standardized material
+                    vocabulary</li>
+            </ul>
+        </section>
+
+        <!-- SECTION 6: EXTERNAL SOURCES -->
+        <section id="external-sources">
+            <h2>6. External Data Sources &amp; SPARQL Integration</h2>
+
+            <h3>6.1 Integration Architecture</h3>
+            <p>
+                ArP integrates with three major Linked Open Data sources, each serving a distinct purpose:
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>SPARQL Endpoint</th>
+                        <th>Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>DBpedia</td>
+                        <td>https://dbpedia.org/sparql</td>
+                        <td>Rich abstracts, biographical data, museum links</td>
+                    </tr>
+                    <tr>
+                        <td>Wikidata</td>
+                        <td>https://query.wikidata.org/sparql</td>
+                        <td>High-quality images, precise dates, material data</td>
+                    </tr>
+                    <tr>
+                        <td>Getty AAT</td>
+                        <td>https://vocab.getty.edu/sparql</td>
+                        <td>Standardized art vocabulary, material taxonomy</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>6.2 Caching Strategy</h3>
+            <p>
+                The <code>ExternalSPARQLService</code> implements a TTL-based in-memory cache to minimize external
+                requests:
+            </p>
+            <pre><code>class SimpleCache:
+    def __init__(self, ttl: int = 3600):
+        self._cache: Dict[str, tuple] = {}
+        self._ttl = ttl
+    
+    def get(self, key: str) -> Optional[Any]:
+        if key in self._cache:
+            value, expiry = self._cache[key]
+            if time.time() < expiry:
+                return value
+        return None
+    
+    def set(self, key: str, value: Any) -> None:
+        self._cache[key] = (value, time.time() + self._ttl)</code></pre>
+
+            <h3>6.3 SPARQL Query Examples</h3>
+
+            <h4>6.3.1 DBpedia: Fetching Artwork Abstract</h4>
+            <pre><code>PREFIX dbo: &lt;http://dbpedia.org/ontology/&gt;
+PREFIX rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+SELECT ?abstract ?thumbnail ?artistName ?museumName WHERE {
+    &lt;http://dbpedia.org/resource/Mona_Lisa&gt; dbo:abstract ?abstract .
+    FILTER(LANG(?abstract) = "en")
+    
+    OPTIONAL { ?artwork dbo:thumbnail ?thumbnail }
+    OPTIONAL { 
+        ?artwork dbo:author ?artist .
+        ?artist rdfs:label ?artistName .
+        FILTER(LANG(?artistName) = "en")
+    }
+    OPTIONAL {
+        ?artwork dbo:museum ?museum .
+        ?museum rdfs:label ?museumName .
+        FILTER(LANG(?museumName) = "en")
+    }
+}</code></pre>
+
+            <h4>6.3.2 Wikidata: Fetching Artwork Metadata</h4>
+            <pre><code>PREFIX wd: &lt;http://www.wikidata.org/entity/&gt;
+PREFIX wdt: &lt;http://www.wikidata.org/prop/direct/&gt;
+PREFIX wikibase: &lt;http://wikiba.se/ontology#&gt;
+PREFIX bd: &lt;http://www.bigdata.com/rdf#&gt;
+
+SELECT ?image ?inception ?creatorLabel ?locationLabel ?materialLabel WHERE {
+    OPTIONAL { wd:Q12418 wdt:P18 ?image }
+    OPTIONAL { wd:Q12418 wdt:P571 ?inception }
+    OPTIONAL { wd:Q12418 wdt:P170 ?creator }
+    OPTIONAL { wd:Q12418 wdt:P276 ?location }
+    OPTIONAL { wd:Q12418 wdt:P186 ?material }
+    
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}</code></pre>
+
+            <h4>6.3.3 Getty AAT: Material Term Lookup</h4>
+            <pre><code>PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;
+PREFIX gvp: &lt;http://vocab.getty.edu/ontology#&gt;
+
+SELECT ?prefLabel ?scopeNote ?broaderLabel WHERE {
+    &lt;http://vocab.getty.edu/aat/300015050&gt; skos:prefLabel ?prefLabel .
+    FILTER(LANG(?prefLabel) = "en")
+    
+    OPTIONAL { 
+        &lt;http://vocab.getty.edu/aat/300015050&gt; skos:scopeNote [rdf:value ?scopeNote] .
+        FILTER(LANG(?scopeNote) = "en")
+    }
+    OPTIONAL {
+        &lt;http://vocab.getty.edu/aat/300015050&gt; gvp:broaderGeneric ?broader .
+        ?broader skos:prefLabel ?broaderLabel .
+        FILTER(LANG(?broaderLabel) = "en")
+    }
+}</code></pre>
+
+            <h4>6.3.4 Federated Query: Cross-Repository Enrichment</h4>
+            <pre><code>PREFIX arp: &lt;http://example.org/arp#&gt;
+PREFIX owl: &lt;http://www.w3.org/2002/07/owl#&gt;
+PREFIX dbo: &lt;http://dbpedia.org/ontology/&gt;
+
+SELECT ?artwork ?title ?abstract WHERE {
+    ?artwork a arp:Artwork ;
+             dc:title ?title ;
+             owl:sameAs ?dbpediaUri .
+    
+    SERVICE &lt;https://dbpedia.org/sparql&gt; {
+        ?dbpediaUri dbo:abstract ?abstract .
+        FILTER(LANG(?abstract) = "en")
+    }
+}</code></pre>
+
+            <h3>6.4 Error Handling &amp; Timeouts</h3>
+            <p>
+                External queries are wrapped with timeout handling (10 seconds) and graceful degradation.
+                If an external source is unavailable, the API returns local data without enrichment
+                rather than failing entirely.
+            </p>
+        </section>
+
+        <!-- SECTION 7: LINKED DATA -->
+        <section id="linked-data">
+            <h2>7. Linked Data Conformance</h2>
+
+            <h3>7.1 The Four Linked Data Principles</h3>
+            <p>
+                ArP adheres to Tim Berners-Lee's four principles for Linked Data:
+            </p>
+
+            <h4>Principle 1: Use URIs as Names for Things</h4>
+            <p>
+                Every entity in ArP has a globally unique URI. Artworks use the pattern
+                <code>http://example.org/arp#artwork_{id}</code>, artists use
+                <code>http://example.org/arp#artist_{id}</code>,
+                and provenance events use <code>http://example.org/arp#provenance_{id}</code>.
+            </p>
+
+            <h4>Principle 2: Use HTTP URIs</h4>
+            <p>
+                All URIs use the HTTP scheme, making them potentially dereferenceable. When deployed with a
+                proper domain, these URIs could resolve to HTML or RDF representations via content negotiation.
+            </p>
+
+            <h4>Principle 3: Provide Useful Information Using Standards</h4>
+            <p>
+                When a URI is accessed (via the API or SPARQL), the system returns data in standard formats:
+            </p>
+            <ul>
+                <li>JSON with embedded JSON-LD context for web applications</li>
+                <li>Native RDF (Turtle, N-Triples, RDF/XML) via the Fuseki SPARQL endpoint</li>
+                <li>Standard vocabularies (Dublin Core, Schema.org, PROV-O, CIDOC-CRM)</li>
+            </ul>
+
+            <h4>Principle 4: Include Links to Other URIs</h4>
+            <p>ArP actively links to external Linked Open Data resources:</p>
+            <ul>
+                <li><code>owl:sameAs</code> links to DBpedia resources (e.g., <code>dbr:Mona_Lisa</code>)</li>
+                <li><code>owl:sameAs</code> links to Wikidata entities (e.g., <code>wd:Q12418</code>)</li>
+                <li><code>schema:artMedium</code> links to Getty AAT terms (e.g., <code>aat:300015050</code>)</li>
+            </ul>
+
+            <h3>7.2 Five-Star Open Data</h3>
+            <p>ArP achieves a <strong>5-star</strong> rating on Tim Berners-Lee's 5-star deployment scheme:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stars</th>
+                        <th>Requirement</th>
+                        <th>ArP Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>★</td>
+                        <td>Data available on web with open license</td>
+                        <td>✓ MIT License</td>
+                    </tr>
+                    <tr>
+                        <td>★★</td>
+                        <td>Machine-readable structured data</td>
+                        <td>✓ JSON, RDF</td>
+                    </tr>
+                    <tr>
+                        <td>★★★</td>
+                        <td>Non-proprietary format</td>
+                        <td>✓ RDF/Turtle, JSON-LD</td>
+                    </tr>
+                    <tr>
+                        <td>★★★★</td>
+                        <td>Use URIs to identify things</td>
+                        <td>✓ HTTP URIs throughout</td>
+                    </tr>
+                    <tr>
+                        <td>★★★★★</td>
+                        <td>Link to other data for context</td>
+                        <td>✓ DBpedia, Wikidata, Getty</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>7.3 FAIR Principles Alignment</h3>
+            <p>The platform also aligns with FAIR principles for research data:</p>
+            <ul>
+                <li><strong>Findable</strong>: Unique identifiers, searchable metadata, indexed in triple store</li>
+                <li><strong>Accessible</strong>: Open REST API, standard SPARQL endpoint, no authentication for public
+                    data</li>
+                <li><strong>Interoperable</strong>: Standard vocabularies, formal ontology, machine-readable formats
+                </li>
+                <li><strong>Reusable</strong>: Clear licensing, provenance tracking, vocabulary documentation</li>
+            </ul>
+        </section>
+
+        <!-- SECTION 8: VIDEO DEMO -->
+        <section id="video-demo">
+            <h2>8. Video Demonstration</h2>
+            <p>
+                The following video provides a comprehensive walkthrough of the ArP platform,
+                demonstrating key features including artwork browsing, provenance visualization,
+                SPARQL query execution, and external data enrichment.
+            </p>
+
+            <div class="figure" style="padding: 0; overflow: hidden;">
+                <!-- Replace YOUR_VIDEO_ID with the actual YouTube video ID -->
+                <iframe width="100%" height="500" src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+                    title="ArP Platform Demo" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen style="border-radius: 0.5rem;">
+                </iframe>
+                <div class="caption" style="padding: 0.75rem;">Video: ArP Platform Demonstration (5-7 minutes)</div>
+            </div>
+
+            <h3>8.1 Demo Contents</h3>
+            <ul>
+                <li><strong>0:00 - 1:00</strong>: Introduction and homepage overview</li>
+                <li><strong>1:00 - 2:30</strong>: Browsing the artwork gallery with filters</li>
+                <li><strong>2:30 - 4:00</strong>: Viewing artwork details and provenance timeline</li>
+                <li><strong>4:00 - 5:30</strong>: Using the SPARQL Explorer for custom queries</li>
+                <li><strong>5:30 - 7:00</strong>: External enrichment from DBpedia and Wikidata</li>
+            </ul>
+
+            <p>
+                <strong>Direct link:</strong>
+                <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank" rel="noopener noreferrer">
+                    https://www.youtube.com/watch?v=YOUR_VIDEO_ID
+                </a>
+            </p>
+        </section>
+
+        <!-- SECTION 9: REFERENCES -->
+        <section id="references">
+            <h2>9. References</h2>
+            <ol>
+                <li>Berners-Lee, T. (2006). "Linked Data—Design Issues." W3C. <a
+                        href="https://www.w3.org/DesignIssues/LinkedData.html">https://www.w3.org/DesignIssues/LinkedData.html</a>
+                </li>
+                <li>CIDOC Conceptual Reference Model (CRM). <a
+                        href="https://www.cidoc-crm.org/">https://www.cidoc-crm.org/</a></li>
+                <li>Dublin Core Metadata Initiative. <a href="https://dublincore.org/">https://dublincore.org/</a></li>
+                <li>Getty Art &amp; Architecture Thesaurus (AAT). <a
+                        href="https://www.getty.edu/research/tools/vocabularies/aat/">https://www.getty.edu/research/tools/vocabularies/aat/</a>
+                </li>
+                <li>Lebo, T., Sahoo, S., McGuinness, D. (2013). "PROV-O: The PROV Ontology." W3C Recommendation. <a
+                        href="https://www.w3.org/TR/prov-o/">https://www.w3.org/TR/prov-o/</a></li>
+                <li>Schema.org. <a href="https://schema.org/">https://schema.org/</a></li>
+                <li>SPARQL 1.1 Query Language. W3C Recommendation. <a
+                        href="https://www.w3.org/TR/sparql11-query/">https://www.w3.org/TR/sparql11-query/</a></li>
+                <li>Wilkinson, M.D., et al. (2016). "The FAIR Guiding Principles for scientific data management and
+                    stewardship." <em>Scientific Data</em> 3, 160018.</li>
+            </ol>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 PrimeProvenance-ArP Project. Alexandru Ioan Cuza University, Iași.</p>
+    </footer>
+</body>
+
+</html>
