@@ -10,6 +10,9 @@ const SearchPage = () => {
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'title' | 'date'>(
+    (searchParams.get('sort') as 'title' | 'date') || 'title'
+  );
 
   // Pagination
   const limit = 12;
@@ -22,6 +25,7 @@ const SearchPage = () => {
     period: searchParams.get('period') || undefined,
     medium: searchParams.get('medium') || undefined,
     location: searchParams.get('location') || undefined,
+    style: searchParams.get('style') || undefined,
   });
 
 
@@ -59,6 +63,7 @@ const SearchPage = () => {
     if (newFilters.period) params.set('period', newFilters.period);
     if (newFilters.medium) params.set('medium', newFilters.medium);
     if (newFilters.location) params.set('location', newFilters.location);
+    if (newFilters.style) params.set('style', newFilters.style);
     if (newPage > 1) params.set('page', String(newPage));
     setSearchParams(params);
   };
@@ -101,11 +106,31 @@ const SearchPage = () => {
     }
   };
 
-  const handleQuickFilter = (period: string) => {
-    handleFilterChange('period', filters.period === period ? undefined : period);
+  const hasActiveFilters = filters.artist || filters.period || filters.medium || filters.location || filters.style;
+
+  // Handle sort change
+  const handleSortChange = (newSort: 'title' | 'date') => {
+    setSortBy(newSort);
+    // Update URL with sort param
+    const params = new URLSearchParams(searchParams);
+    if (newSort === 'date') {
+      params.set('sort', 'date');
+    } else {
+      params.delete('sort');
+    }
+    setSearchParams(params);
   };
 
-  const hasActiveFilters = filters.artist || filters.period || filters.medium || filters.location;
+  // Sort results client-side
+  const sortedResults = searchResponse?.results ?
+    sortBy === 'date'
+      ? [...searchResponse.results].sort((a, b) => {
+        const dateA = a.dateCreated || '';
+        const dateB = b.dateCreated || '';
+        return dateB.localeCompare(dateA); // Newest first
+      })
+      : [...searchResponse.results].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+    : [];
 
   return (
     <div className="min-h-screen bg-parchment">
@@ -152,21 +177,23 @@ const SearchPage = () => {
             </div>
           </form>
 
-          {/* Quick Filters */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {['Renaissance', 'Impressionism', 'Post-Impressionism', 'Dutch Golden Age', 'Expressionism'].map((period) => (
-              <button
-                key={period}
-                onClick={() => handleQuickFilter(period)}
-                className={`rounded-full border px-4 py-1 text-sm transition-colors ${filters.period === period
-                  ? 'border-gold bg-gold/20 text-gold'
-                  : 'border-parchment/30 text-parchment/70 hover:border-gold hover:text-gold'
-                  }`}
-              >
-                {period}
-              </button>
-            ))}
-          </div>
+          {/* Quick Filters - Dynamic from facets (artwork styles) */}
+          {searchResponse?.facets?.styles && searchResponse.facets.styles.length > 0 && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {searchResponse.facets.styles.slice(0, 5).map((facet) => (
+                <button
+                  key={facet.name}
+                  onClick={() => handleFilterChange('style', filters.style === facet.name ? undefined : facet.name)}
+                  className={`cursor-pointer rounded-full border px-4 py-1 text-sm transition-colors ${filters.style === facet.name
+                    ? 'border-gold bg-gold/20 text-gold'
+                    : 'border-parchment/30 text-parchment/70 hover:border-gold hover:text-gold'
+                    }`}
+                >
+                  {facet.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -343,14 +370,18 @@ const SearchPage = () => {
                     <p className="text-charcoal-light">
                       Found <span className="font-medium text-charcoal">{searchResponse?.total}</span> artworks
                     </p>
-                    <select className="rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal focus:border-gold focus:outline-none">
-                      <option value="relevance">Sort by Relevance</option>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => handleSortChange(e.target.value as 'title' | 'date')}
+                      className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal focus:border-gold focus:outline-none"
+                    >
                       <option value="title">Title A-Z</option>
+                      <option value="date">Date (Newest)</option>
                     </select>
                   </div>
 
                   <div className="space-y-4">
-                    {searchResponse?.results.map((artwork) => (
+                    {sortedResults.map((artwork) => (
                       <Link
                         key={artwork.id}
                         to={`/artworks/${artwork.id}`}
@@ -420,7 +451,7 @@ const SearchPage = () => {
                         <button
                           onClick={() => goToPage(page - 1)}
                           disabled={page <= 1}
-                          className="rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Previous
                         </button>
@@ -431,7 +462,7 @@ const SearchPage = () => {
                             <>
                               <button
                                 onClick={() => goToPage(1)}
-                                className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                                className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
                               >
                                 1
                               </button>
@@ -443,7 +474,7 @@ const SearchPage = () => {
                           {page > 1 && (
                             <button
                               onClick={() => goToPage(page - 1)}
-                              className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                              className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
                             >
                               {page - 1}
                             </button>
@@ -458,7 +489,7 @@ const SearchPage = () => {
                           {page < totalPages && (
                             <button
                               onClick={() => goToPage(page + 1)}
-                              className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                              className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
                             >
                               {page + 1}
                             </button>
@@ -470,7 +501,7 @@ const SearchPage = () => {
                               {page < totalPages - 2 && <span className="px-2 text-bronze">...</span>}
                               <button
                                 onClick={() => goToPage(totalPages)}
-                                className="rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
+                                className="cursor-pointer rounded-lg px-3 py-2 text-sm text-charcoal-light hover:text-charcoal transition-colors"
                               >
                                 {totalPages}
                               </button>
@@ -481,7 +512,7 @@ const SearchPage = () => {
                         <button
                           onClick={() => goToPage(page + 1)}
                           disabled={page >= totalPages}
-                          className="rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="cursor-pointer rounded-lg border border-bronze/30 bg-ivory px-4 py-2 text-sm text-charcoal-light hover:border-gold hover:text-charcoal transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Next
                         </button>

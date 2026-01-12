@@ -270,6 +270,7 @@ export interface SearchFilters {
   period?: string;
   medium?: string;
   location?: string;
+  style?: string;
 }
 
 export interface SearchResponse {
@@ -283,6 +284,7 @@ export interface SearchResponse {
     periods: { name: string; count: number }[];
     media: { name: string; count: number }[];
     locations: { name: string; count: number }[];
+    styles: { name: string; count: number }[];
   };
 }
 
