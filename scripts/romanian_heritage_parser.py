@@ -17,6 +17,7 @@ import argparse
 import re
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -456,6 +457,11 @@ class DataEnricher:
         wikidata_result = self._query_wikidata_artwork(title, normalized_artist)
         result.update(wikidata_result)
 
+        # Also try DBpedia for artwork (even if Wikidata succeeded, to get both links)
+        dbpedia_result = self._query_dbpedia_artwork(title, normalized_artist)
+        if dbpedia_result.get("dbpedia_uri"):
+            result["dbpedia_uri"] = dbpedia_result["dbpedia_uri"]
+
         self._artwork_cache[cache_key] = result
         return result
 
@@ -511,11 +517,37 @@ class DataEnricher:
 
     @staticmethod
     def normalize_artist_name(name: str) -> str:
-        """Convert 'Surname, FirstName' to 'FirstName Surname' format."""
+        """
+        Normalize artist name for SPARQL queries.
+
+        Handles various formats:
+        - 'Surname, FirstName' -> 'FirstName Surname'
+        - 'Surname, FirstName, numit Nickname' -> 'FirstName Surname'
+        - 'Surname, FirstName (maniera)' -> 'FirstName Surname'
+        - Removes special characters like ~ that appear in some records
+        - Cleans up Romanian/Italian annotations
+        """
+        # Remove special characters like tilde
+        name = name.replace("~", "").strip()
+
+        # Remove parenthetical annotations like "(maniera)", "(atelier)", "(școală)", etc.
+        # These indicate "in the manner of", "workshop of", "school of"
+        name = re.sub(r"\s*\([^)]*\)\s*", " ", name)
+
+        # Remove Romanian annotations: "numit X" (called X), "zis X" (said X)
+        # These appear after the name: "Tamm, Franz Werner, numit Dapper"
+        name = re.sub(r",?\s*numit\s+\w+", "", name, flags=re.IGNORECASE)
+        name = re.sub(r",?\s*zis\s+\w+", "", name, flags=re.IGNORECASE)
+
+        # Clean up multiple spaces before processing comma
+        name = re.sub(r"\s+", " ", name).strip()
+
+        # Handle "Surname, FirstName" format
         if "," in name:
             parts = name.split(",", 1)
             if len(parts) == 2:
                 return f"{parts[1].strip()} {parts[0].strip()}"
+
         return name.strip()
 
     def _query_wikidata_artist(self, artist_name: str) -> Dict[str, Any]:
@@ -532,10 +564,21 @@ class DataEnricher:
         safe_name = artist_name.replace('"', '\\"')
 
         # SPARQL query for Wikidata - search for artists/painters
+        # Search in both English (@en) and Romanian (@ro) labels, plus aliases
         query = f"""
         SELECT ?artist ?artistLabel ?birthDate ?deathDate ?nationalityLabel ?description WHERE {{
           ?artist wdt:P31 wd:Q5 .  # instance of human
-          ?artist rdfs:label "{safe_name}"@en .
+          
+          # Search in labels (en, ro) OR aliases (skos:altLabel)
+          {{
+            ?artist rdfs:label "{safe_name}"@en .
+          }} UNION {{
+            ?artist rdfs:label "{safe_name}"@ro .
+          }} UNION {{
+            ?artist skos:altLabel "{safe_name}"@en .
+          }} UNION {{
+            ?artist skos:altLabel "{safe_name}"@ro .
+          }}
           
           # Prefer artists/painters
           OPTIONAL {{ ?artist wdt:P106 ?occupation . }}
@@ -577,13 +620,22 @@ class DataEnricher:
             else:
                 self._log_warning(
                     f"Wikidata: No artist found for '{artist_name}' "
-                    f"(searched: '{safe_name}'@en)"
+                    f"(searched: '{safe_name}'@en/@ro)"
                 )
 
         except SPARQLWrapperException as e:
             self._log_warning(f"Wikidata artist query FAILED for '{artist_name}': {e}")
             self._log_warning(f"  Endpoint: {WIKIDATA_ENDPOINT}")
             self._log_warning(f'  Query pattern: rdfs:label "{safe_name}"@en')
+        except urllib.error.HTTPError as e:
+            self._log_warning(
+                f"Wikidata HTTP ERROR for artist '{artist_name}': {e.code} {e.reason}"
+            )
+            self._log_warning(f"  Endpoint: {WIKIDATA_ENDPOINT}")
+        except urllib.error.URLError as e:
+            self._log_warning(
+                f"Wikidata NETWORK ERROR for artist '{artist_name}': {e.reason}"
+            )
 
         return result
 
@@ -641,6 +693,79 @@ class DataEnricher:
         except SPARQLWrapperException as e:
             self._log_warning(f"Wikidata artwork query FAILED for '{title[:40]}': {e}")
             self._log_warning(f"  Endpoint: {WIKIDATA_ENDPOINT}")
+        except urllib.error.HTTPError as e:
+            self._log_warning(
+                f"Wikidata HTTP ERROR for artwork '{title[:40]}': {e.code} {e.reason}"
+            )
+        except urllib.error.URLError as e:
+            self._log_warning(
+                f"Wikidata NETWORK ERROR for artwork '{title[:40]}': {e.reason}"
+            )
+
+        return result
+
+    def _query_dbpedia_artwork(
+        self, title: str, artist_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Query DBpedia for artwork information."""
+        result = {"dbpedia_uri": None}
+
+        # Escape quotes
+        safe_title = title.replace('"', '\\"').replace("'", "\\'")
+
+        # Build artist filter if provided
+        artist_filter = ""
+        if artist_name:
+            safe_artist = artist_name.replace('"', '\\"').replace("'", "\\'")
+            artist_filter = f"""
+          OPTIONAL {{ ?artwork dbo:author ?author . ?author rdfs:label ?authorLabel . FILTER(LANG(?authorLabel) = "en") }}
+          FILTER(!BOUND(?author) || CONTAINS(LCASE(?authorLabel), LCASE("{safe_artist}")))
+            """
+
+        query = f"""
+        PREFIX dbo: <http://dbpedia.org/ontology/>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        
+        SELECT ?artwork WHERE {{
+          ?artwork a dbo:Artwork .
+          ?artwork rdfs:label ?label .
+          FILTER(LANG(?label) = "en" || LANG(?label) = "ro")
+          FILTER(CONTAINS(LCASE(?label), LCASE("{safe_title}")))
+          {artist_filter}
+        }}
+        LIMIT 1
+        """
+
+        try:
+            sparql = SPARQLWrapper(DBPEDIA_ENDPOINT)
+            sparql.setQuery(query)
+            sparql.setReturnFormat(JSON)
+            sparql.addCustomHttpHeader("User-Agent", "RomanianHeritageParser/1.0")
+
+            time.sleep(self._query_delay)
+
+            results = sparql.query().convert()
+            bindings = results.get("results", {}).get("bindings", [])
+
+            if bindings:
+                result["dbpedia_uri"] = bindings[0].get("artwork", {}).get("value")
+            else:
+                self._log_warning(
+                    f"DBpedia: No artwork found for title '{title[:40]}...'"
+                    + (f" by '{artist_name}'" if artist_name else "")
+                )
+
+        except SPARQLWrapperException as e:
+            self._log_warning(f"DBpedia artwork query FAILED for '{title[:40]}': {e}")
+            self._log_warning(f"  Endpoint: {DBPEDIA_ENDPOINT}")
+        except urllib.error.HTTPError as e:
+            self._log_warning(
+                f"DBpedia HTTP ERROR for artwork '{title[:40]}': {e.code} {e.reason}"
+            )
+        except urllib.error.URLError as e:
+            self._log_warning(
+                f"DBpedia NETWORK ERROR for artwork '{title[:40]}': {e.reason}"
+            )
 
         return result
 
@@ -717,6 +842,15 @@ class DataEnricher:
             self._log_warning(f"DBpedia artist query FAILED for '{artist_name}': {e}")
             self._log_warning(f"  Endpoint: {DBPEDIA_ENDPOINT}")
             self._log_warning(f"  Attempted resource: dbr:{dbpedia_name}")
+        except urllib.error.HTTPError as e:
+            self._log_warning(
+                f"DBpedia HTTP ERROR for artist '{artist_name}': {e.code} {e.reason}"
+            )
+            self._log_warning(f"  Endpoint: {DBPEDIA_ENDPOINT}")
+        except urllib.error.URLError as e:
+            self._log_warning(
+                f"DBpedia NETWORK ERROR for artist '{artist_name}': {e.reason}"
+            )
 
         return result
 
@@ -1344,6 +1478,7 @@ class RomanianHeritageConverter:
             "artists_enriched_dbpedia": 0,
             "artists_not_found": 0,
             "artworks_enriched_wikidata": 0,
+            "artworks_enriched_dbpedia": 0,
             "artworks_not_found": 0,
             "getty_aat_linked": 0,
             "getty_aat_not_found": 0,
@@ -1416,16 +1551,24 @@ class RomanianHeritageConverter:
                         if not has_artist_link:
                             self._stats["artists_not_found"] += 1
 
-                    # Try to find artwork in Wikidata
+                    # Try to find artwork in Wikidata and DBpedia
                     artwork_enrichment = self.enricher.enrich_artwork(
                         artwork.get("title", ""), artwork.get("creator")
                     )
+                    has_artwork_link = False
                     if artwork_enrichment.get("wikidata_uri"):
                         print(
                             f"  ✓ Artwork Wikidata: {artwork_enrichment['wikidata_uri']}"
                         )
                         self._stats["artworks_enriched_wikidata"] += 1
-                    else:
+                        has_artwork_link = True
+                    if artwork_enrichment.get("dbpedia_uri"):
+                        print(
+                            f"  ✓ Artwork DBpedia: {artwork_enrichment['dbpedia_uri']}"
+                        )
+                        self._stats["artworks_enriched_dbpedia"] += 1
+                        has_artwork_link = True
+                    if not has_artwork_link:
                         self._stats["artworks_not_found"] += 1
                 else:
                     # Even without enrichment, we can still map to Getty AAT
@@ -1477,8 +1620,10 @@ class RomanianHeritageConverter:
 
             print("\n📊 Artwork Enrichment:")
             wd_artworks = stats["artworks_enriched_wikidata"]
+            db_artworks = stats["artworks_enriched_dbpedia"]
             no_artworks = stats["artworks_not_found"]
             print(f"  ✓ Wikidata links found: {wd_artworks}")
+            print(f"  ✓ DBpedia links found:  {db_artworks}")
             if no_artworks > 0:
                 print(f"  ✗ Artworks not found:   {no_artworks}")
 
@@ -1500,8 +1645,10 @@ class RomanianHeritageConverter:
                     else 0
                 )
                 artwork_rate = (
-                    wd_artworks / (wd_artworks + no_artworks) * 100
-                    if (wd_artworks + no_artworks) > 0
+                    (wd_artworks + db_artworks)
+                    / (wd_artworks + db_artworks + no_artworks)
+                    * 100
+                    if (wd_artworks + db_artworks + no_artworks) > 0
                     else 0
                 )
                 aat_rate = (
@@ -1549,6 +1696,10 @@ class RomanianHeritageConverter:
 
         # Serialize current graph (without prefixes since we wrote them already)
         ttl_content = self.rdf_generator.graph.serialize(format="turtle")
+
+        # Fix namespace prefix renaming by rdflib (e.g., schema: -> schema:)
+        # rdflib sometimes renames prefixes to avoid internal conflicts
+        ttl_content = ttl_content.replace("schema1:", "schema:")
 
         # Remove prefix declarations from serialized content (already in file)
         lines = ttl_content.split("\n")
