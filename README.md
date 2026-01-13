@@ -1,6 +1,5 @@
 <div align="center">
 
-  <img src="docs/logo.png" alt="logo" width="200" height="auto" />
   <h1>ArP - Artwork Provenance</h1>
   
   <p>
@@ -30,6 +29,8 @@
 </p>
    
 <h4>
+    <a href="https://arp-frontend-348542955632.europe-central2.run.app/">Live App</a>
+  <span> · </span>
     <a href="https://www.youtube.com/watch?v=PuDslfFO_Ik">View Demo</a>
   <span> · </span>
     <a href="#toolbox-getting-started">Documentation</a>
@@ -313,10 +314,15 @@ Here you can find all the resources and documentation related to the ArP project
 The complete source code is hosted on GitHub:
 *   [**Repository Link**](https://github.com/MateiTiplea/PrimeProvenance-ArP)
 
+### Live Application
+*   [**Frontend Cloud Link**](https://arp-frontend-348542955632.europe-central2.run.app/)
+*   [**Backend API Docs**](https://arp-backend-348542955632.europe-central2.run.app/api/docs)
+*   [**Fuseki SPARQL Interface**](https://arp-fuseki-348542955632.europe-central2.run.app/#/)
+
 ### Documentation
 *   **Technical Report (Scholarly HTML)**: [docs/technical-report.html](frontend/public/docs/technical-report.html)
 *   **Ontology Documentation**: [docs/ontology.md](docs/ontology.md)
-*   **API Documentation**: [Swagger UI](http://localhost:8000/docs) *(runs locally)*
+*   **API Documentation**: [Online Swagger UI](https://arp-backend-348542955632.europe-central2.run.app/api/docs) / [Local](http://localhost:8000/docs)
 *   **OpenAPI Spec**: [docs/openapi.yaml](docs/openapi.yaml)
 
 
